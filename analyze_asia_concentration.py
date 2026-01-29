@@ -130,6 +130,8 @@ def filter_rows(rows, morph, **kwargs):
             out = [r for r in out if r['G'] is not None and r['G'] >= v]
         elif k == 'G_le':
             out = [r for r in out if r['G'] is not None and r['G'] <= v]
+        elif k == 'G_lt':
+            out = [r for r in out if r['G'] is not None and r['G'] < v]
         elif k == 'G_range':
             # v = (min, max) 表示 min <= G <= max
             out = [r for r in out if r['G'] is not None and v[0] <= r['G'] <= v[1]]
@@ -171,9 +173,10 @@ def stats(rows):
 # 红色列 G、I、K、N、P 及 Q、R 的候选条件：(显示名, filter_key, value)。
 # 根据手工统计参考图，添加更多阈值和范围条件，使特征场次可达总场次的30%左右。
 RED_CONDITIONS = [
-    # G（马会/上水）：低水、中水、< 0.75、> 2.3、< 0.8、> 0.8
-    ('G<0.75', 'G_le', 0.75), ('G<0.8', 'G_le', 0.8), ('G<0.95', 'G_le', 0.95),
-    ('G>0.8', 'G_gt', 0.8), ('G>2.3', 'G_gt', 2.3), ('G≥1.0', 'G_ge', 1.0),
+    # G（马会/上水）：低水、中水、< 0.75、> 2.3、< 0.8、> 0.8、0.89~0.99范围
+    ('G<0.75', 'G_le', 0.75), ('G<0.8', 'G_le', 0.8), ('G<0.95', 'G_le', 0.95), ('G<0.99', 'G_lt', 0.99),
+    ('G>0.8', 'G_gt', 0.8), ('G>0.89', 'G_gt', 0.89), ('G>2.3', 'G_gt', 2.3), ('G≥1.0', 'G_ge', 1.0),
+    ('G(0.89~0.99)', 'G_range', (0.89, 0.99)),
     # I（水差）：≤ -0.08、-0.02、< 0、(-0.01~-0.03)、< -0.05
     ('I≤-0.08', 'I_le', -0.08), ('I<-0.05', 'I_lt', -0.05), ('I<0', 'I_lt', 0),
     ('I≥2', 'I_ge', 2.0), ('I≥3', 'I_ge', 3.0), ('I<2', 'I_le', 1.99),
