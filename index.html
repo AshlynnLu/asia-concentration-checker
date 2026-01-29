@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亚洲盘集中度判断工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1976d2;
+        }
+        
+        .loading-status {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            padding: 8px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .input-group.required label::after {
+            content: ' *';
+            color: #e74c3c;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-check {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-check:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-check:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-clear {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-clear:hover {
+            background: #d0d0d0;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-section.show {
+            display: block;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-card.matched {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        
+        .result-card.not-matched {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .result-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .status-matched {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status-not-matched {
+            background: #f44336;
+            color: white;
+        }
+        
+        .rules-list {
+            margin-top: 15px;
+        }
+        
+        .rule-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .rule-item strong {
+            color: #667eea;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>亚洲盘集中度判断工具</h1>
+        <p class="subtitle">输入A-R列数据，判断是否满足高集中度条件</p>
+        
+        <div class="info-box">
+            <strong>说明：</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>条件1：除去走盘的，集中度≥85%（总场次≥6）</li>
+                <li>条件2：算上走盘的，集中度≥80%（总场次≥5）</li>
+                <li>仅判断主/0/0和客/0/0形态</li>
+            </ul>
+        </div>
+        
+        <div class="loading-status" id="loadingStatus">正在加载规则数据...</div>
+        
+        <div class="input-section" id="inputSection" style="display: none;">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>A (强队)</label>
+                    <input type="text" id="A" placeholder="强队">
+                </div>
+                <div class="input-group required">
+                    <label>B (弱队/主客)</label>
+                    <input type="text" id="B" placeholder="主/客" required>
+                </div>
+                <div class="input-group">
+                    <label>C (时间)</label>
+                    <input type="text" id="C" placeholder="时间">
+                </div>
+                <div class="input-group required">
+                    <label>D (澳门)</label>
+                    <input type="text" id="D" placeholder="0" required>
+                </div>
+                <div class="input-group">
+                    <label>E (上水)</label>
+                    <input type="text" id="E" placeholder="数值">
+                </div>
+                <div class="input-group required">
+                    <label>F (马会)</label>
+                    <input type="text" id="F" placeholder="0" required>
+                </div>
+                <div class="input-group">
+                    <label>G (上水)</label>
+                    <input type="text" id="G" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>H (盘差)</label>
+                    <input type="text" id="H" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>I (水差)</label>
+                    <input type="text" id="I" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>J (澳)</label>
+                    <input type="text" id="J" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>K</label>
+                    <input type="text" id="K" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>L</label>
+                    <input type="text" id="L" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>M (马)</label>
+                    <input type="text" id="M" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>N</label>
+                    <input type="text" id="N" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>O</label>
+                    <input type="text" id="O" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>P (主差)</label>
+                    <input type="text" id="P" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>Q (平差)</label>
+                    <input type="text" id="Q" placeholder="数值">
+                </div>
+                <div class="input-group">
+                    <label>R (客差)</label>
+                    <input type="text" id="R" placeholder="数值">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-check" id="btnCheck" onclick="checkData()">判断</button>
+                <button class="btn-clear" onclick="clearData()">清空</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>正在分析...</div>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="result-card" id="result1">
+                <div class="result-title">条件1：除去走盘的，集中度≥85%（总场次≥6）</div>
+                <div class="result-status" id="status1"></div>
+                <div class="rules-list" id="rules1"></div>
+            </div>
+            
+            <div class="result-card" id="result2">
+                <div class="result-title">条件2：算上走盘的，集中度≥80%（总场次≥5）</div>
+                <div class="result-status" id="status2"></div>
+                <div class="rules-list" id="rules2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let rulesData = null;
+        
+        // 加载规则数据
+        async function loadRules() {
+            try {
+                const response = await fetch('static/rules.json');
+                if (!response.ok) {
+                    throw new Error('无法加载规则数据');
+                }
+                rulesData = await response.json();
+                document.getElementById('loadingStatus').textContent = `规则数据已加载（条件1: ${rulesData.meta.count_85}条，条件2: ${rulesData.meta.count_80}条）`;
+                document.getElementById('inputSection').style.display = 'block';
+            } catch (error) {
+                document.getElementById('loadingStatus').textContent = '错误：' + error.message;
+                document.getElementById('loadingStatus').style.color = '#f44336';
+            }
+        }
+        
+        // 检查条件是否满足
+        function checkCondition(rowData, rules) {
+            const matched = [];
+            
+            // 提取关键字段
+            const B = String(rowData.B || '').trim();
+            const D = String(rowData.D || '').trim();
+            const F = String(rowData.F || '').trim();
+            
+            // 只检查主/0/0和客/0/0
+            if (B !== '主' && B !== '客') return matched;
+            if (D !== '0' || F !== '0') return matched;
+            
+            const morph = [B, D, F];
+            
+            // 提取数值列
+            function getNum(col) {
+                const val = rowData[col];
+                if (val === null || val === undefined || val === '') return null;
+                const num = parseFloat(val);
+                return isNaN(num) ? null : num;
+            }
+            
+            const G = getNum('G');
+            const I = getNum('I');
+            const K = getNum('K');
+            const N = getNum('N');
+            const P = getNum('P');
+            const Q = getNum('Q');
+            const R = getNum('R');
+            
+            const colValues = { G, I, K, N, P, Q, R };
+            
+            // 检查每个规则
+            for (const rule of rules) {
+                // 检查形态
+                if (JSON.stringify(rule.morph) !== JSON.stringify(morph)) continue;
+                
+                // 检查条件
+                let match = true;
+                for (const [key, val] of Object.entries(rule.conditions)) {
+                    const colName = key.split('_')[0];
+                    const colVal = colValues[colName];
+                    
+                    if (colVal === null || colVal === undefined) {
+                        match = false;
+                        break;
+                    }
+                    
+                    if (key.endsWith('_ge')) {
+                        if (colVal < val) { match = false; break; }
+                    } else if (key.endsWith('_le')) {
+                        if (colVal > val) { match = false; break; }
+                    } else if (key.endsWith('_gt')) {
+                        if (colVal <= val) { match = false; break; }
+                    } else if (key.endsWith('_lt')) {
+                        if (colVal >= val) { match = false; break; }
+                    } else if (key.endsWith('_range')) {
+                        if (!(val[0] <= colVal && colVal <= val[1])) { match = false; break; }
+                    }
+                }
+                
+                if (match) {
+                    matched.push(rule);
+                }
+            }
+            
+            return matched;
+        }
+        
+        async function checkData() {
+            if (!rulesData) {
+                alert('规则数据尚未加载，请稍候...');
+                return;
+            }
+            
+            // 收集数据
+            const data = {};
+            for (let col of 'ABCDEFGHIJKLMNOPQR') {
+                const input = document.getElementById(col);
+                const val = input.value.trim();
+                data[col] = val || null;
+            }
+            
+            // 验证必填字段
+            if (!data['B'] || !data['D'] || !data['F']) {
+                alert('请填写必填字段：B(主客)、D(澳门)、F(马会)');
+                return;
+            }
+            
+            // 验证形态
+            if (data['B'] !== '主' && data['B'] !== '客') {
+                alert('B列必须是"主"或"客"');
+                return;
+            }
+            
+            if (data['D'] !== '0' || data['F'] !== '0') {
+                alert('当前仅支持主/0/0和客/0/0形态，D和F必须为"0"');
+                return;
+            }
+            
+            // 显示加载
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('btnCheck').disabled = true;
+            
+            // 使用setTimeout模拟异步，避免阻塞UI
+            setTimeout(() => {
+                try {
+                    // 检查条件
+                    const matched_85 = checkCondition(data, rulesData.rules_85);
+                    const matched_80 = checkCondition(data, rulesData.rules_80);
+                    
+                    // 显示结果
+                    displayResult({
+                        condition1: {
+                            matched: matched_85.length > 0,
+                            count: matched_85.length,
+                            rules: matched_85.slice(0, 5).map(r => ({
+                                feature: r.feature,
+                                conc: r.conc_no_zou,
+                                n_total: r.n_total,
+                                n_eff: r.n_eff,
+                                shang: r.shang,
+                                xia: r.xia,
+                                zou: r.zou
+                            }))
+                        },
+                        condition2: {
+                            matched: matched_80.length > 0,
+                            count: matched_80.length,
+                            rules: matched_80.slice(0, 5).map(r => ({
+                                feature: r.feature,
+                                conc: r.conc_with_zou,
+                                n_total: r.n_total,
+                                shang: r.shang,
+                                xia: r.xia,
+                                zou: r.zou
+                            }))
+                        }
+                    });
+                } catch (error) {
+                    alert('判断出错：' + error.message);
+                } finally {
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('btnCheck').disabled = false;
+                }
+            }, 100);
+        }
+        
+        function displayResult(result) {
+            // 条件1
+            const cond1 = result.condition1;
+            const card1 = document.getElementById('result1');
+            const status1 = document.getElementById('status1');
+            const rules1 = document.getElementById('rules1');
+            
+            if (cond1.matched) {
+                card1.className = 'result-card matched';
+                status1.className = 'result-status status-matched';
+                status1.textContent = `✓ 满足条件（匹配 ${cond1.count} 条规则）`;
+                
+                let html = '';
+                for (let rule of cond1.rules) {
+                    html += `
+                        <div class="rule-item">
+                            <strong>特征：</strong>${rule.feature}<br>
+                            集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                            上${rule.shang}下${rule.xia}走${rule.zou}
+                        </div>
+                    `;
+                }
+                rules1.innerHTML = html;
+            } else {
+                card1.className = 'result-card not-matched';
+                status1.className = 'result-status status-not-matched';
+                status1.textContent = '✗ 不满足条件';
+                rules1.innerHTML = '';
+            }
+            
+            // 条件2
+            const cond2 = result.condition2;
+            const card2 = document.getElementById('result2');
+            const status2 = document.getElementById('status2');
+            const rules2 = document.getElementById('rules2');
+            
+            if (cond2.matched) {
+                card2.className = 'result-card matched';
+                status2.className = 'result-status status-matched';
+                status2.textContent = `✓ 满足条件（匹配 ${cond2.count} 条规则）`;
+                
+                let html = '';
+                for (let rule of cond2.rules) {
+                    html += `
+                        <div class="rule-item">
+                            <strong>特征：</strong>${rule.feature}<br>
+                            集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                            上${rule.shang}下${rule.xia}走${rule.zou}
+                        </div>
+                    `;
+                }
+                rules2.innerHTML = html;
+            } else {
+                card2.className = 'result-card not-matched';
+                status2.className = 'result-status status-not-matched';
+                status2.textContent = '✗ 不满足条件';
+                rules2.innerHTML = '';
+            }
+            
+            document.getElementById('resultSection').classList.add('show');
+        }
+        
+        function clearData() {
+            for (let col of 'ABCDEFGHIJKLMNOPQR') {
+                document.getElementById(col).value = '';
+            }
+            document.getElementById('resultSection').classList.remove('show');
+        }
+        
+        // 回车键提交
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                checkData();
+            }
+        });
+        
+        // 页面加载时加载规则
+        loadRules();
+    </script>
+</body>
+</html>
