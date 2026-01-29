@@ -209,25 +209,44 @@ def check():
         }
         
         # 添加匹配的规则信息（最多显示5条）
+        # 对于每个匹配的规则，重新筛选数据以显示实际结果
         for rule in matched_85[:5]:
+            # 重新筛选数据以获取实际结果
+            actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            actual_c = Counter(r['U'] for r in actual_matched)
+            actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
+            actual_n_total = len(actual_matched)
+            actual_n_eff = actual_shang + actual_xia
+            actual_main_val = max(actual_shang, actual_xia)
+            actual_conc_no_zou = (actual_main_val / actual_n_eff * 100) if actual_n_eff > 0 else 0
+            
             result['condition1']['rules'].append({
                 'feature': rule['feature'],
-                'conc': round(rule['conc_no_zou'], 2),
-                'n_total': rule['n_total'],
-                'n_eff': rule['n_eff'],
-                'shang': rule['shang'],
-                'xia': rule['xia'],
-                'zou': rule['zou'],
+                'conc': round(actual_conc_no_zou, 2),  # 使用实际筛选结果的集中度
+                'n_total': actual_n_total,  # 使用实际筛选结果的总场次
+                'n_eff': actual_n_eff,  # 使用实际筛选结果的有效场次
+                'shang': actual_shang,  # 使用实际筛选结果的上
+                'xia': actual_xia,  # 使用实际筛选结果的下
+                'zou': actual_zou,  # 使用实际筛选结果的走
             })
         
         for rule in matched_80[:5]:
+            # 重新筛选数据以获取实际结果
+            actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            actual_c = Counter(r['U'] for r in actual_matched)
+            actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
+            actual_n_total = len(actual_matched)
+            actual_n_eff = actual_shang + actual_xia
+            actual_main_val = max(actual_shang, actual_xia)
+            actual_conc_with_zou = (actual_main_val / actual_n_total * 100) if actual_n_total > 0 else 0
+            
             result['condition2']['rules'].append({
                 'feature': rule['feature'],
-                'conc': round(rule['conc_with_zou'], 2),
-                'n_total': rule['n_total'],
-                'shang': rule['shang'],
-                'xia': rule['xia'],
-                'zou': rule['zou'],
+                'conc': round(actual_conc_with_zou, 2),  # 使用实际筛选结果的集中度
+                'n_total': actual_n_total,  # 使用实际筛选结果的总场次
+                'shang': actual_shang,  # 使用实际筛选结果的上
+                'xia': actual_xia,  # 使用实际筛选结果的下
+                'zou': actual_zou,  # 使用实际筛选结果的走
             })
         
         return jsonify(result)
