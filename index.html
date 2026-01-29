@@ -61,6 +61,59 @@
             margin-bottom: 30px;
         }
         
+        .paste-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #667eea;
+        }
+        
+        .paste-section label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .paste-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.3s;
+        }
+        
+        .paste-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .paste-section .paste-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .btn-parse {
+            background: #4caf50;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .btn-parse:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
         .input-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -254,6 +307,13 @@
         <div class="loading-status" id="loadingStatus">正在加载规则数据...</div>
         
         <div class="input-section" id="inputSection" style="display: none;">
+            <div class="paste-section">
+                <label for="pasteData">快速粘贴（A-R列数据，用制表符或空格分隔）：</label>
+                <textarea id="pasteData" placeholder="例如：英超	客	4	0	0.8	0	0.78	0	0.02	2.4	3.1	2.7	2.39	2.9	2.74	-0.01	-0.20	0.04"></textarea>
+                <p class="paste-hint">💡 提示：从Excel或表格中复制整行数据，然后粘贴到上方文本框，点击"解析数据"按钮即可自动填充</p>
+                <button class="btn-parse" onclick="parsePastedData()">解析数据</button>
+            </div>
+            
             <div class="input-grid">
                 <div class="input-group">
                     <label>A (强队)</label>
@@ -586,7 +646,58 @@
             document.getElementById('resultSection').classList.add('show');
         }
         
+        function parsePastedData() {
+            const pasteText = document.getElementById('pasteData').value.trim();
+            if (!pasteText) {
+                alert('请先粘贴数据');
+                return;
+            }
+            
+            // 尝试按制表符分割，如果没有制表符则按多个空格分割
+            let parts = pasteText.split(/\t/);
+            if (parts.length === 1) {
+                // 如果没有制表符，尝试按多个空格分割
+                parts = pasteText.split(/\s+/);
+            }
+            
+            // 清理每个部分（去除首尾空格）
+            parts = parts.map(p => p.trim()).filter(p => p.length > 0);
+            
+            // 验证数据数量（A-R共18列）
+            if (parts.length < 18) {
+                alert(`数据列数不足：期望18列（A-R），实际${parts.length}列。\n\n请确保数据完整，列之间用制表符或空格分隔。`);
+                return;
+            }
+            
+            if (parts.length > 18) {
+                alert(`数据列数过多：期望18列（A-R），实际${parts.length}列。\n\n将使用前18列数据。`);
+            }
+            
+            // 填充到各个输入框
+            const columns = 'ABCDEFGHIJKLMNOPQR';
+            for (let i = 0; i < 18 && i < parts.length; i++) {
+                const col = columns[i];
+                const input = document.getElementById(col);
+                if (input) {
+                    input.value = parts[i];
+                }
+            }
+            
+            // 提示成功
+            const hint = document.querySelector('.paste-hint');
+            const originalText = hint.textContent;
+            hint.textContent = '✓ 数据已成功解析并填充！';
+            hint.style.color = '#4caf50';
+            setTimeout(() => {
+                hint.textContent = originalText;
+                hint.style.color = '#666';
+            }, 2000);
+        }
+        
         function clearData() {
+            // 清空粘贴框
+            document.getElementById('pasteData').value = '';
+            // 清空所有输入框
             for (let col of 'ABCDEFGHIJKLMNOPQR') {
                 document.getElementById(col).value = '';
             }
@@ -597,6 +708,11 @@
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
                 checkData();
+            }
+            // 在粘贴框中按Ctrl+Enter或Cmd+Enter解析
+            if (e.key === 'Enter' && e.target.id === 'pasteData' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                parsePastedData();
             }
         });
         
