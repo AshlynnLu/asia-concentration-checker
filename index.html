@@ -259,8 +259,53 @@
             border: 1px solid #e0e0e0;
         }
         
+        .rule-item.pred-shang {
+            border-left: 4px solid #4caf50;
+        }
+        
+        .rule-item.pred-xia {
+            border-left: 4px solid #ff9800;
+        }
+        
         .rule-item strong {
             color: #667eea;
+        }
+        
+        .prediction-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .prediction-badge.shang {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .prediction-badge.xia {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .prediction-badge.zou {
+            background: #9e9e9e;
+            color: white;
+        }
+        
+        .rules-group {
+            margin-top: 15px;
+        }
+        
+        .rules-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e0e0e0;
         }
         
         .loading {
@@ -552,7 +597,7 @@
                         condition1: {
                             matched: matched_85.length > 0,
                             count: matched_85.length,
-                            rules: matched_85.slice(0, 5).map(r => ({
+                            rules: matched_85.map(r => ({
                                 feature: r.feature,
                                 conc: r.conc_no_zou,
                                 n_total: r.n_total,
@@ -565,7 +610,7 @@
                         condition2: {
                             matched: matched_80.length > 0,
                             count: matched_80.length,
-                            rules: matched_80.slice(0, 5).map(r => ({
+                            rules: matched_80.map(r => ({
                                 feature: r.feature,
                                 conc: r.conc_with_zou,
                                 n_total: r.n_total,
@@ -594,18 +639,73 @@
             if (cond1.matched) {
                 card1.className = 'result-card matched';
                 status1.className = 'result-status status-matched';
-                status1.textContent = `✓ 满足条件（匹配 ${cond1.count} 条规则）`;
+                
+                // 按预测方向分组
+                const shangRules = cond1.rules.filter(r => r.shang > r.xia);
+                const xiaRules = cond1.rules.filter(r => r.xia > r.shang);
+                const zouRules = cond1.rules.filter(r => r.shang === 0 && r.xia === 0 && r.zou > 0);
+                
+                status1.textContent = `✓ 满足条件（匹配 ${cond1.count} 条规则：${shangRules.length}条预测上盘，${xiaRules.length}条预测下盘${zouRules.length > 0 ? `，${zouRules.length}条预测走盘` : ''}）`;
                 
                 let html = '';
-                for (let rule of cond1.rules) {
-                    html += `
-                        <div class="rule-item">
-                            <strong>特征：</strong>${rule.feature}<br>
-                            集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
-                            上${rule.shang}下${rule.xia}走${rule.zou}
-                        </div>
-                    `;
+                
+                // 显示预测上盘的规则
+                if (shangRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">📈 预测上盘规则（${shangRules.length}条）</div>`;
+                    for (let rule of shangRules.slice(0, 10)) {
+                        html += `
+                            <div class="rule-item pred-shang">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge shang">预测：上盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    if (shangRules.length > 10) {
+                        html += `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">... 还有 ${shangRules.length - 10} 条规则</div>`;
+                    }
+                    html += `</div>`;
                 }
+                
+                // 显示预测下盘的规则
+                if (xiaRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">📉 预测下盘规则（${xiaRules.length}条）</div>`;
+                    for (let rule of xiaRules.slice(0, 10)) {
+                        html += `
+                            <div class="rule-item pred-xia">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge xia">预测：下盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    if (xiaRules.length > 10) {
+                        html += `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">... 还有 ${xiaRules.length - 10} 条规则</div>`;
+                    }
+                    html += `</div>`;
+                }
+                
+                // 显示预测走盘的规则
+                if (zouRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">➖ 预测走盘规则（${zouRules.length}条）</div>`;
+                    for (let rule of zouRules.slice(0, 5)) {
+                        html += `
+                            <div class="rule-item">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge zou">预测：走盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+                
                 rules1.innerHTML = html;
             } else {
                 card1.className = 'result-card not-matched';
@@ -623,18 +723,73 @@
             if (cond2.matched) {
                 card2.className = 'result-card matched';
                 status2.className = 'result-status status-matched';
-                status2.textContent = `✓ 满足条件（匹配 ${cond2.count} 条规则）`;
+                
+                // 按预测方向分组
+                const shangRules = cond2.rules.filter(r => r.shang > r.xia);
+                const xiaRules = cond2.rules.filter(r => r.xia > r.shang);
+                const zouRules = cond2.rules.filter(r => r.shang === 0 && r.xia === 0 && r.zou > 0);
+                
+                status2.textContent = `✓ 满足条件（匹配 ${cond2.count} 条规则：${shangRules.length}条预测上盘，${xiaRules.length}条预测下盘${zouRules.length > 0 ? `，${zouRules.length}条预测走盘` : ''}）`;
                 
                 let html = '';
-                for (let rule of cond2.rules) {
-                    html += `
-                        <div class="rule-item">
-                            <strong>特征：</strong>${rule.feature}<br>
-                            集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
-                            上${rule.shang}下${rule.xia}走${rule.zou}
-                        </div>
-                    `;
+                
+                // 显示预测上盘的规则
+                if (shangRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">📈 预测上盘规则（${shangRules.length}条）</div>`;
+                    for (let rule of shangRules.slice(0, 10)) {
+                        html += `
+                            <div class="rule-item pred-shang">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge shang">预测：上盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    if (shangRules.length > 10) {
+                        html += `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">... 还有 ${shangRules.length - 10} 条规则</div>`;
+                    }
+                    html += `</div>`;
                 }
+                
+                // 显示预测下盘的规则
+                if (xiaRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">📉 预测下盘规则（${xiaRules.length}条）</div>`;
+                    for (let rule of xiaRules.slice(0, 10)) {
+                        html += `
+                            <div class="rule-item pred-xia">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge xia">预测：下盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    if (xiaRules.length > 10) {
+                        html += `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">... 还有 ${xiaRules.length - 10} 条规则</div>`;
+                    }
+                    html += `</div>`;
+                }
+                
+                // 显示预测走盘的规则
+                if (zouRules.length > 0) {
+                    html += `<div class="rules-group">
+                        <div class="rules-group-title">➖ 预测走盘规则（${zouRules.length}条）</div>`;
+                    for (let rule of zouRules.slice(0, 5)) {
+                        html += `
+                            <div class="rule-item">
+                                <strong>特征：</strong>${rule.feature}
+                                <span class="prediction-badge zou">预测：走盘</span><br>
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+                
                 rules2.innerHTML = html;
             } else {
                 card2.className = 'result-card not-matched';
