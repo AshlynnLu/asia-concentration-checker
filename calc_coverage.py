@@ -20,7 +20,7 @@ def get_matching_rows(rows, morph, cond_combo):
     return filter_rows(rows, morph, **kw)
 
 def calc_stats():
-    rows = load_xlsx('20252026欧洲FB.xlsx')
+    rows = load_xlsx('docs/20252026欧洲FB.xlsx')
     
     # 只分析主/0/0和客/0/0
     target_morphs = [('主', '0', '0'), ('客', '0', '0')]
@@ -62,14 +62,15 @@ def calc_stats():
                 conc_no_zou = (main_val / n_eff * 100) if n_eff > 0 else 0
                 conc_with_zou = (main_val / len(matched) * 100) if len(matched) > 0 else 0
                 
-                # 如果规则满足条件，记录所有匹配的比赛
+                # 如果规则满足条件，记录所有匹配的比赛（第一部分要求上/下/走至少有一项≥5）
                 n_total = len(matched)
-                # 第一部分：集中度≥85%，总场次≥6
-                if conc_no_zou >= 85 and n_total >= 6:
+                at_least_5 = shang >= 5 or xia >= 5 or zou >= 5
+                # 第一部分：集中度≥85%，总场次≥6，且上/下/走至少有一项≥5
+                if conc_no_zou >= 85 and n_total >= 6 and at_least_5:
                     for r in matched:
                         games_no_zou_90.add(get_game_id(r))
                 
-                # 第二部分：集中度≥80%，总场次≥5
+                # 第二部分：集中度≥80%，总场次≥5（不要求上/下/走≥5）
                 if conc_with_zou >= 80 and n_total >= 5:
                     for r in matched:
                         games_with_zou_80.add(get_game_id(r))
@@ -81,12 +82,18 @@ def calc_stats():
     # 统计结果
     print("\n" + "=" * 60)
     print("主/0/0 和 客/0/0 形态下的场次覆盖统计（去重后）")
-    print("条件：第一部分 集中度≥85%，总场次≥6；第二部分 集中度≥80%，总场次≥5")
+    print("条件：第一部分 集中度≥85%，总场次≥6（且上/下/走至少有一项≥5）；第二部分 集中度≥80%，总场次≥5")
     print("=" * 60)
+
+    # 有规则的比赛（任一条或多条符合，去重）
+    total_unique_games = len(set(get_game_id(r) for r in [r for r in rows if (r['B'], r['D'], r['F']) in target_morphs]))
+    games_any = games_no_zou_90 | games_with_zou_80
+    n_any = len(games_any)
+    print(f"\n有规则的比赛（任一条或多条符合，去重）: {n_any} 场 / {total_unique_games} 场")
     
     # 找出这些比赛的实际数据
     all_target_rows = [r for r in rows if (r['B'], r['D'], r['F']) in target_morphs]
-    
+
     games_90_list = []
     games_80_list = []
     

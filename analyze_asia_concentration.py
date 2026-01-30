@@ -4,9 +4,10 @@
 亚洲盘集中度分析（X 相同 = BDF 合并形态）：
 - 只分析红色列 G、I、K、N、P 及 Q、R 的范围对结果集中度的影响。
 - 集中度 = 主要结果/(上+下)，不含走；符合条件样本数 = 上+下。
-- 输出：集中度>80% 且 样本≥5；放宽：样本=4 且 集中度=100% 也输出。
+- 输出：集中度>80% 且 样本≥5；放宽：样本=4 且 集中度=100% 也输出（不要求上/下/走≥5）。
 - 单独统计「仅走盘」情形：上=0、下=0、走≥1。
 - 特征可仅为 1～2 列，不必全部满足。
+- 统计按「场次」去重：同一场次多行（如多盘口）仅计一次，场次键为 (B,D,F,E,G,H,I,K,N,P,Q,R,S,T)。
 """
 import zipfile
 import xml.etree.ElementTree as ET
@@ -63,7 +64,8 @@ def load_xlsx(path):
     B, D, F, E, G, H, I, K, N, P, Q, R, S, T, U = 1, 3, 5, 4, 6, 7, 8, 10, 13, 15, 16, 17, 18, 19, 20
     nrows = max(grid.keys()) + 1
     rows = []
-    for r in range(2, nrows):
+    # 数据从第 4 行开始（第 1～3 行为表头/筛选行）
+    for r in range(3, nrows):
         d_val = str(grid[r].get(D, '')).strip()
         f_val = str(grid[r].get(F, '')).strip()
         u_val = str(grid[r].get(U, '')).strip()
@@ -84,77 +86,111 @@ def load_xlsx(path):
         rows.append(row)
     return rows
 
+def _game_key(r):
+    """场次唯一键：除结果 U 外的特征列。同一场次多行（如多盘口）只计一次。"""
+    return (
+        r['B'], r['D'], r['F'],
+        r.get('E'), r.get('G'), r.get('H'), r.get('I'), r.get('K'),
+        r.get('N'), r.get('P'), r.get('Q'), r.get('R'), r.get('S'), r.get('T'),
+    )
+
+def unique_by_game(rows):
+    """按场次去重：同一 game_key 只保留第一条。返回去重后的行列表。"""
+    seen = set()
+    out = []
+    for r in rows:
+        k = _game_key(r)
+        if k not in seen:
+            seen.add(k)
+            out.append(r)
+    return out
+
+def outcome_set(rows):
+    """返回行的场次集合（用于按匹配集去重：同一批场次只保留条件最少的一条）。"""
+    return frozenset(_game_key(r) for r in rows)
+
+# 浮点比较容差，避免边界因浮点误差被排除（ge/le/gt/lt 及 range 均使用）
+_RANGE_EPS = 1e-9
+
 def filter_rows(rows, morph, **kwargs):
     """morph = (B, D, F)。kwargs 为各红色列及 Q,R 的阈值。"""
     out = [r for r in rows if (r['B'], r['D'], r['F']) == morph]
+    e = _RANGE_EPS
     for k, v in kwargs.items():
         if v is None:
             continue
         if k == 'K_ge':
-            out = [r for r in out if r['K'] is not None and r['K'] >= v]
+            out = [r for r in out if r['K'] is not None and r['K'] >= v - e]
         elif k == 'K_le':
-            out = [r for r in out if r['K'] is not None and r['K'] <= v]
+            out = [r for r in out if r['K'] is not None and r['K'] <= v + e]
+        elif k == 'K_lt':
+            out = [r for r in out if r['K'] is not None and r['K'] < v + e]
         elif k == 'K_gt':
-            out = [r for r in out if r['K'] is not None and r['K'] > v]
+            out = [r for r in out if r['K'] is not None and r['K'] > v - e]
         elif k == 'N_ge':
-            out = [r for r in out if r['N'] is not None and r['N'] >= v]
+            out = [r for r in out if r['N'] is not None and r['N'] >= v - e]
         elif k == 'N_le':
-            out = [r for r in out if r['N'] is not None and r['N'] <= v]
+            out = [r for r in out if r['N'] is not None and r['N'] <= v + e]
+        elif k == 'N_lt':
+            out = [r for r in out if r['N'] is not None and r['N'] < v + e]
         elif k == 'N_gt':
-            out = [r for r in out if r['N'] is not None and r['N'] > v]
+            out = [r for r in out if r['N'] is not None and r['N'] > v - e]
         elif k == 'I_ge':
-            out = [r for r in out if r['I'] is not None and r['I'] >= v]
+            out = [r for r in out if r['I'] is not None and r['I'] >= v - e]
         elif k == 'I_le':
-            out = [r for r in out if r['I'] is not None and r['I'] <= v]
+            out = [r for r in out if r['I'] is not None and r['I'] <= v + e]
+        elif k == 'I_lt':
+            out = [r for r in out if r['I'] is not None and r['I'] < v + e]
         elif k == 'P_ge':
-            out = [r for r in out if r['P'] is not None and r['P'] >= v]
+            out = [r for r in out if r['P'] is not None and r['P'] >= v - e]
         elif k == 'P_le':
-            out = [r for r in out if r['P'] is not None and r['P'] <= v]
+            out = [r for r in out if r['P'] is not None and r['P'] <= v + e]
         elif k == 'P_lt':
-            out = [r for r in out if r['P'] is not None and r['P'] < v]
+            out = [r for r in out if r['P'] is not None and r['P'] < v + e]
         elif k == 'P_gt':
-            out = [r for r in out if r['P'] is not None and r['P'] > v]
+            out = [r for r in out if r['P'] is not None and r['P'] > v - e]
         elif k == 'Q_lt':
-            out = [r for r in out if r['Q'] is not None and r['Q'] < v]
+            out = [r for r in out if r['Q'] is not None and r['Q'] < v + e]
         elif k == 'Q_gt':
-            out = [r for r in out if r['Q'] is not None and r['Q'] > v]
+            out = [r for r in out if r['Q'] is not None and r['Q'] > v - e]
         elif k == 'R_lt':
-            out = [r for r in out if r['R'] is not None and r['R'] < v]
+            out = [r for r in out if r['R'] is not None and r['R'] < v + e]
         elif k == 'R_gt':
-            out = [r for r in out if r['R'] is not None and r['R'] > v]
+            out = [r for r in out if r['R'] is not None and r['R'] > v - e]
+        elif k == 'R_ge':
+            out = [r for r in out if r['R'] is not None and r['R'] >= v - e]
         elif k == 'E_ge':
-            out = [r for r in out if r['E'] is not None and r['E'] >= v]
+            out = [r for r in out if r['E'] is not None and r['E'] >= v - e]
         elif k == 'E_le':
-            out = [r for r in out if r['E'] is not None and r['E'] <= v]
+            out = [r for r in out if r['E'] is not None and r['E'] <= v + e]
         elif k == 'G_ge':
-            out = [r for r in out if r['G'] is not None and r['G'] >= v]
+            out = [r for r in out if r['G'] is not None and r['G'] >= v - e]
         elif k == 'G_le':
-            out = [r for r in out if r['G'] is not None and r['G'] <= v]
+            out = [r for r in out if r['G'] is not None and r['G'] <= v + e]
         elif k == 'G_lt':
-            out = [r for r in out if r['G'] is not None and r['G'] < v]
+            out = [r for r in out if r['G'] is not None and r['G'] < v + e]
         elif k == 'G_range':
-            # v = (min, max) 表示 min <= G <= max
-            out = [r for r in out if r['G'] is not None and v[0] <= r['G'] <= v[1]]
+            out = [r for r in out if r['G'] is not None and v[0] - e <= r['G'] <= v[1] + e]
         elif k == 'I_range':
-            out = [r for r in out if r['I'] is not None and v[0] <= r['I'] <= v[1]]
+            out = [r for r in out if r['I'] is not None and v[0] - e <= r['I'] <= v[1] + e]
         elif k == 'K_range':
-            out = [r for r in out if r['K'] is not None and v[0] <= r['K'] <= v[1]]
+            out = [r for r in out if r['K'] is not None and v[0] - e <= r['K'] <= v[1] + e]
         elif k == 'N_range':
-            out = [r for r in out if r['N'] is not None and v[0] <= r['N'] <= v[1]]
+            out = [r for r in out if r['N'] is not None and v[0] - e <= r['N'] <= v[1] + e]
         elif k == 'P_range':
-            out = [r for r in out if r['P'] is not None and v[0] <= r['P'] <= v[1]]
+            out = [r for r in out if r['P'] is not None and v[0] - e <= r['P'] <= v[1] + e]
         elif k == 'Q_range':
-            out = [r for r in out if r['Q'] is not None and v[0] <= r['Q'] <= v[1]]
+            out = [r for r in out if r['Q'] is not None and v[0] - e <= r['Q'] <= v[1] + e]
         elif k == 'R_range':
-            out = [r for r in out if r['R'] is not None and v[0] <= r['R'] <= v[1]]
+            out = [r for r in out if r['R'] is not None and v[0] - e <= r['R'] <= v[1] + e]
         elif k == 'H_ge':
-            out = [r for r in out if r['H'] is not None and r['H'] >= v]
+            out = [r for r in out if r['H'] is not None and r['H'] >= v - e]
         elif k == 'H_le':
-            out = [r for r in out if r['H'] is not None and r['H'] <= v]
+            out = [r for r in out if r['H'] is not None and r['H'] <= v + e]
         elif k == 'H_gt':
-            out = [r for r in out if r['H'] is not None and r['H'] > v]
+            out = [r for r in out if r['H'] is not None and r['H'] > v - e]
         elif k == 'H_lt':
-            out = [r for r in out if r['H'] is not None and r['H'] < v]
+            out = [r for r in out if r['H'] is not None and r['H'] < v + e]
     return out
 
 def stats(rows):
@@ -174,7 +210,7 @@ def stats(rows):
 # 根据手工统计参考图，添加更多阈值和范围条件，使特征场次可达总场次的30%左右。
 RED_CONDITIONS = [
     # G（马会/上水）：低水、中水、< 0.75、< 0.8、< 0.9、< 0.95、> 0.8、> 0.89、0.89~0.99范围
-    ('G<0.75', 'G_le', 0.75), ('G<0.8', 'G_le', 0.8), ('G<0.9', 'G_lt', 0.9), ('G<0.95', 'G_le', 0.95), ('G<0.99', 'G_lt', 0.99),
+    ('G<0.75', 'G_le', 0.75), ('G<0.8', 'G_lt', 0.8), ('G<0.9', 'G_lt', 0.9), ('G<0.95', 'G_le', 0.95), ('G<0.99', 'G_lt', 0.99),
     ('G>0.8', 'G_gt', 0.8), ('G>0.89', 'G_gt', 0.89), ('G≥1.0', 'G_ge', 1.0),
     ('G(0.89~0.99)', 'G_range', (0.89, 0.99)),
     # I（水差）：≤ -0.08、-0.02、< 0、(-0.01~-0.03)、< -0.05
@@ -199,7 +235,7 @@ RED_CONDITIONS = [
     ('Q>0', 'Q_gt', 0), ('Q>0.05', 'Q_gt', 0.05), ('Q>0.1', 'Q_gt', 0.1),
     # R（客差）：(-0.11~-0.13)、≤ -0.05、< 0、> 0
     ('R<-0.05', 'R_lt', -0.05), ('R≤-0.05', 'R_le', -0.05), ('R<0', 'R_lt', 0),
-    ('R>0', 'R_gt', 0), ('R>0.05', 'R_gt', 0.05),
+    ('R>0', 'R_gt', 0), ('R≥0', 'R_ge', 0), ('R>0.05', 'R_gt', 0.05),
     ('R(-0.13~-0.11)', 'R_range', (-0.13, -0.11)),
 ]
 
@@ -239,7 +275,8 @@ def run_search(rows):
                 names = [c[0] for c in cond_combo]
                 kw = {c[1]: c[2] for c in cond_combo}
                 sub = filter_rows(rows, morph, **kw)
-                n_total, shang, xia, zou, n_eff, main, conc = stats(sub)
+                sub_unique = unique_by_game(sub)
+                n_total, shang, xia, zou, n_eff, main, conc = stats(sub_unique)
                 if n_eff == 0:
                     continue
                 # 放宽条件：样本数≥5 且 集中度>80%；或 样本数=4 且 集中度=100%
@@ -252,15 +289,18 @@ def run_search(rows):
                     continue
                 seen_outcome.add(key)
                 feat = '，且'.join(names)
+                total_base_u = len(unique_by_game(base))
                 results.append({
                     '类型': x_label,
                     '特征': feat,
                     '集中度': conc,
                     '符合条件样本数': n_eff,
                     '总场次': n_total,
-                    '占总场次比例': round(n_total / total_base * 100, 1) if total_base > 0 else 0,
+                    '占总场次比例': round(n_total / total_base_u * 100, 1) if total_base_u > 0 else 0,
                     '上': shang, '下': xia, '走': zou,
                     '主要': main,
+                    '_morph': morph,
+                    '_conditions': kw,
                 })
     return results
 
@@ -276,11 +316,7 @@ def count_high_conc_matches(rows, target_morphs=None):
         morphs = [m for m in morphs if m in target_morphs]
     morphs = sorted(morphs, key=lambda m: -len([r for r in rows if (r['B'], r['D'], r['F']) == m]))
 
-    # 给每行一个唯一标识（用索引）
-    for idx, r in enumerate(rows):
-        r['_match_id'] = idx
-
-    matched_effective_games = set()  # 已匹配的有效比赛ID集合（去重用，只包含上/下，不含走）
+    matched_effective_games = set()  # 已匹配的有效场次（按 _game_key 去重，只包含上/下，不含走）
     matching_rules = []  # 符合条件的规则及其匹配的比赛
 
     for morph in morphs:
@@ -296,13 +332,14 @@ def count_high_conc_matches(rows, target_morphs=None):
                 names = [c[0] for c in cond_combo]
                 kw = {c[1]: c[2] for c in cond_combo}
                 sub = filter_rows(rows, morph, **kw)
-                n_total, shang, xia, zou, n_eff, main, conc = stats(sub)
+                sub_unique = unique_by_game(sub)
+                n_total, shang, xia, zou, n_eff, main, conc = stats(sub_unique)
                 
                 # 筛选：集中度≥90% 且 走盘≥3
                 if conc >= 90 and zou >= 3 and n_eff > 0:
-                    # 只统计有效场次（上+下），排除走盘
-                    effective_games = [r['_match_id'] for r in sub if r['U'] in ('上', '下')]
-                    new_matches = [gid for gid in effective_games if gid not in matched_effective_games]
+                    # 只统计有效场次（上+下），按场次去重
+                    effective_game_keys = [_game_key(r) for r in sub_unique if r['U'] in ('上', '下')]
+                    new_matches = [gk for gk in effective_game_keys if gk not in matched_effective_games]
                     matched_effective_games.update(new_matches)
                     
                     feat = '，且'.join(names)
@@ -314,7 +351,7 @@ def count_high_conc_matches(rows, target_morphs=None):
                         '总场次': n_total,
                         '上': shang, '下': xia, '走': zou,
                         '主要': main,
-                        '有效场次数': len(effective_games),
+                        '有效场次数': len(effective_game_keys),
                         '新增有效场次数': len(new_matches),
                     })
 
@@ -333,7 +370,8 @@ def run_zou_only(rows):
                 names = [c[0] for c in cond_combo]
                 kw = {c[1]: c[2] for c in cond_combo}
                 sub = filter_rows(rows, morph, **kw)
-                n_total, shang, xia, zou, n_eff, main, conc = stats(sub)
+                sub_unique = unique_by_game(sub)
+                n_total, shang, xia, zou, n_eff, main, conc = stats(sub_unique)
                 if shang == 0 and xia == 0 and zou >= 1:
                     x_label = f"{morph[0]}/{morph[1]}/{morph[2]}"
                     feat = '，且'.join(names)
@@ -345,28 +383,54 @@ def run_zou_only(rows):
                     })
     return results
 
+def _recompute_result_stats(rows, r):
+    """自查：用 morph+conditions 重新筛选、按场次去重、重算统计，返回修正后的数字。"""
+    morph = r.get('_morph')
+    kw = r.get('_conditions')
+    if morph is None or kw is None:
+        return r
+    sub = filter_rows(rows, morph, **kw)
+    sub_unique = unique_by_game(sub)
+    n_total, shang, xia, zou, n_eff, main, conc = stats(sub_unique)
+    base = [x for x in rows if (x['B'], x['D'], x['F']) == morph]
+    total_base_u = len(unique_by_game(base))
+    out = dict(r)
+    out['总场次'] = n_total
+    out['上'] = shang
+    out['下'] = xia
+    out['走'] = zou
+    out['符合条件样本数'] = n_eff
+    out['集中度'] = conc
+    out['主要'] = main
+    out['占总场次比例'] = round(n_total / total_base_u * 100, 1) if total_base_u > 0 else 0
+    return out
+
 def main():
-    data_path = '20252026欧洲FB.xlsx'
+    data_path = 'docs/20252026欧洲FB.xlsx'
     rows = load_xlsx(data_path)
     print('等值纪录数:', len(rows))
 
     results = run_search(rows)
     results.sort(key=lambda x: (-x['集中度'], -x['符合条件样本数'], x['类型']))
 
+    # 自查：每条结果用相同条件重算统计，保证输出与筛选一致
+    results_checked = [_recompute_result_stats(rows, r) for r in results]
+
     out_path = '集中度分析结果.csv'
+    fieldnames = ['类型', '特征', '集中度', '符合条件样本数', '总场次', '占总场次比例', '上', '下', '走', '主要']
     with open(out_path, 'w', newline='', encoding='utf-8-sig') as f:
-        w = csv.DictWriter(f, fieldnames=['类型', '特征', '集中度', '符合条件样本数', '总场次', '占总场次比例', '上', '下', '走', '主要'])
+        w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
         w.writeheader()
-        w.writerows(results)
+        w.writerows(results_checked)
     print('已写入:', out_path)
-    print('集中度>80% 且 样本≥5（或样本=4且100%）的规则数:', len(results))
+    print('集中度>80% 且 样本≥5（或样本=4且100%）的规则数:', len(results_checked))
 
     report = [
         '# 高集中度数据特征（仅含集中度>80%）',
-        '# 集中度 = 主要结果/(上+下)，符合条件样本数 = 上+下。',
+        '# 集中度 = 主要结果/(上+下)，符合条件样本数 = 上+下。统计按场次去重。',
         ''
     ]
-    for r in results:
+    for r in results_checked:
         report.append(
             f"类型：{r['类型']}；特征：{r['特征']}；"
             f"集中度 {r['集中度']}%；符合条件样本数 {r['符合条件样本数']}；总场次 {r['总场次']}（占比{r['占总场次比例']}%）；"
@@ -384,7 +448,7 @@ def main():
         f.write('\n'.join(report))
     print('已写入:', report_path)
     print('\n--- 高集中度规则（前 30 条）---')
-    for r in results[:30]:
+    for r in results_checked[:30]:
         print(f"  类型：{r['类型']}；特征：{r['特征']}；集中度 {r['集中度']}%；样本数 {r['符合条件样本数']}；总场次 {r['总场次']}（占比{r['占总场次比例']}%）；上{r['上']}下{r['下']}走{r['走']}")
     if zou_list:
         print('\n--- 仅走盘的特征 ---')

@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from analyze_asia_concentration import load_xlsx, filter_rows, RED_CONDITIONS, _no_duplicate_col
+from analyze_asia_concentration import load_xlsx, filter_rows, unique_by_game, RED_CONDITIONS, _no_duplicate_col, _RANGE_EPS
 from itertools import combinations
 from collections import Counter
 
@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 # 预加载数据和规则
 print("正在加载数据...")
-all_rows = load_xlsx('20252026欧洲FB.xlsx')
+all_rows = load_xlsx('docs/20252026欧洲FB.xlsx')
 print(f"已加载 {len(all_rows)} 条数据")
 
 # 预计算符合条件的规则
@@ -36,11 +36,11 @@ def precompute_rules():
                 matched = filter_rows(all_rows, morph, **kw)
                 if not matched:
                     continue
-                
-                c = Counter(r['U'] for r in matched)
+                matched_unique = unique_by_game(matched)
+                c = Counter(r['U'] for r in matched_unique)
                 shang, xia, zou = c.get('上', 0), c.get('下', 0), c.get('走', 0)
                 n_eff = shang + xia
-                n_total = len(matched)
+                n_total = len(matched_unique)
                 
                 if n_eff == 0:
                     continue
@@ -63,7 +63,8 @@ def precompute_rules():
                     'zou': zou,
                 }
                 
-                if conc_no_zou >= 85 and n_total >= 6:
+                at_least_5 = shang >= 5 or xia >= 5 or zou >= 5
+                if conc_no_zou >= 85 and n_total >= 6 and at_least_5:
                     rules_85.append(rule_info)
                 if conc_with_zou >= 80 and n_total >= 5:
                     rules_80.append(rule_info)
@@ -142,8 +143,9 @@ def check_conditions(row_data, rules):
         if rule['morph'] != morph:
             continue
         
-        # 检查条件是否满足
+        # 检查条件是否满足（使用浮点容差，与 filter_rows 一致）
         match = True
+        e = _RANGE_EPS
         for key, val in rule['conditions'].items():
             col_name = key.split('_')[0]  # G_ge -> G
             col_val = {'G': G, 'I': I, 'K': K, 'N': N, 'P': P, 'Q': Q, 'R': R}.get(col_name)
@@ -153,23 +155,23 @@ def check_conditions(row_data, rules):
                 break
             
             if key.endswith('_ge'):
-                if col_val < val:
+                if col_val < val - e:
                     match = False
                     break
             elif key.endswith('_le'):
-                if col_val > val:
+                if col_val > val + e:
                     match = False
                     break
             elif key.endswith('_gt'):
-                if col_val <= val:
+                if col_val <= val - e:
                     match = False
                     break
             elif key.endswith('_lt'):
-                if col_val >= val:
+                if col_val >= val + e:
                     match = False
                     break
             elif key.endswith('_range'):
-                if not (val[0] <= col_val <= val[1]):
+                if not (val[0] - e <= col_val <= val[1] + e):
                     match = False
                     break
         
@@ -211,8 +213,9 @@ def check():
         # 添加匹配的规则信息（最多显示5条）
         # 对于每个匹配的规则，重新筛选数据以显示实际结果
         for rule in matched_85[:5]:
-            # 重新筛选数据以获取实际结果
+            # 重新筛选数据、按场次去重后统计
             actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            actual_matched = unique_by_game(actual_matched)
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
             actual_n_total = len(actual_matched)
@@ -231,8 +234,9 @@ def check():
             })
         
         for rule in matched_80[:5]:
-            # 重新筛选数据以获取实际结果
+            # 重新筛选数据、按场次去重后统计
             actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            actual_matched = unique_by_game(actual_matched)
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
             actual_n_total = len(actual_matched)

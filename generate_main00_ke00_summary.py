@@ -18,7 +18,7 @@ def get_matching_rows(rows, morph, cond_combo):
     return filter_rows(rows, morph, **kw)
 
 def generate_summary():
-    rows = load_xlsx('20252026欧洲FB.xlsx')
+    rows = load_xlsx('docs/20252026欧洲FB.xlsx')
     
     # 只分析主/0/0和客/0/0
     target_morphs = [('主', '0', '0'), ('客', '0', '0')]
@@ -62,9 +62,10 @@ def generate_summary():
                 main_val = max(shang, xia)
                 conc_no_zou = (main_val / n_eff * 100) if n_eff > 0 else 0
                 
-                # 只保留集中度≥85%且总场次≥6的
+                # 只保留集中度≥85%且总场次≥6，且上/下/走至少有一项≥5
                 n_total = len(matched)
-                if conc_no_zou >= 85 and n_total >= 6:
+                at_least_5 = shang >= 5 or xia >= 5 or zou >= 5
+                if conc_no_zou >= 85 and n_total >= 6 and at_least_5:
                     feat = '，且'.join([c[0] for c in cond_combo])
                     pct = round(n_total / total_morph * 100, 1) if total_morph > 0 else 0
                     
@@ -133,7 +134,7 @@ def generate_summary():
                 main_val = max(shang, xia)
                 conc_with_zou = (main_val / n_total * 100) if n_total > 0 else 0
                 
-                # 只保留集中度≥80%且总场次≥5的
+                # 只保留集中度≥80%且总场次≥5（第二种计算方式不要求上/下/走≥5）
                 if conc_with_zou >= 80 and n_total >= 5:
                     feat = '，且'.join([c[0] for c in cond_combo])
                     pct = round(n_total / total_morph * 100, 1) if total_morph > 0 else 0
