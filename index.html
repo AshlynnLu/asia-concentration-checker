@@ -581,6 +581,8 @@
                 return;
             }
             
+
+            
             // 显示加载
             document.getElementById('loading').classList.add('show');
             document.getElementById('resultSection').classList.remove('show');
@@ -600,8 +602,9 @@
                             count: matched_85.length,
                             rules: matched_85.map(r => ({
                                 feature: r.feature,
-                                conc: Math.max(r.shang_zou_ratio, r.xia_zou_ratio),
+                                conc: r.conc_no_zou,
                                 n_total: r.n_total,
+                                n_eff: r.n_eff,
                                 shang: r.shang,
                                 xia: r.xia,
                                 zou: r.zou
@@ -612,7 +615,7 @@
                             count: matched_80.length,
                             rules: matched_80.map(r => ({
                                 feature: r.feature,
-                                conc: Math.max(r.shang_ratio, r.zou_ratio, r.xia_ratio),
+                                conc: r.conc_with_zou,
                                 n_total: r.n_total,
                                 shang: r.shang,
                                 xia: r.xia,
@@ -639,6 +642,13 @@
             if (cond1.matched) {
                 card1.className = 'result-card matched';
                 status1.className = 'result-status status-matched';
+                
+                // 为每个规则计算条件1的集中度（取(上+走)或(下+走)的较大值）
+                cond1.rules.forEach(rule => {
+                    const shangZouRatio = ((rule.shang + rule.zou) / rule.n_total * 100);
+                    const xiaZouRatio = ((rule.xia + rule.zou) / rule.n_total * 100);
+                    rule.conc = Math.max(shangZouRatio, xiaZouRatio);
+                });
                 
                 // 按预测方向分组
                 const shangRules = cond1.rules.filter(r => r.shang > r.xia);
@@ -723,6 +733,14 @@
             if (cond2.matched) {
                 card2.className = 'result-card matched';
                 status2.className = 'result-status status-matched';
+                
+                // 为每个规则计算条件2的集中度（取上/走/下的最大值）
+                cond2.rules.forEach(rule => {
+                    const shangRatio = (rule.shang / rule.n_total * 100);
+                    const zouRatio = (rule.zou / rule.n_total * 100);
+                    const xiaRatio = (rule.xia / rule.n_total * 100);
+                    rule.conc = Math.max(shangRatio, zouRatio, xiaRatio);
+                });
                 
                 // 按预测方向分组
                 const shangRules = cond2.rules.filter(r => r.shang > r.xia);
