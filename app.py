@@ -11,7 +11,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from analyze_asia_concentration import load_xlsx, filter_rows, unique_by_game, RED_CONDITIONS, _no_duplicate_col, _RANGE_EPS
 from itertools import combinations
 from collections import Counter
-from manual_rules import load_xlsx_rules, find_matching_rules
 
 app = Flask(__name__)
 
@@ -23,12 +22,7 @@ print(f"已加载 {len(all_rows)} 条数据")
 # 预计算符合条件的规则
 def precompute_rules():
     """预计算所有符合条件的规则"""
-    target_morphs = [
-        ('主', '0', '0'), ('客', '0', '0'),
-        ('主', '0', '0.25'), ('客', '0', '0.25'),
-        ('主', '0.25', '0'), ('客', '0.25', '0'),
-        ('主', '0.5', '0.25'), ('客', '0.5', '0.25'),
-    ]
+    target_morphs = [('主', '0', '0'), ('客', '0', '0')]
     rules_85 = []  # 集中度≥85%，总场次≥6
     rules_80 = []  # 集中度≥80%，总场次≥5
     
@@ -89,21 +83,8 @@ def precompute_rules():
 
 print("正在预计算规则...")
 rules_85, rules_80 = precompute_rules()
-print(f"已计算规则（所有盘口类型）：")
-print(f"  条件1（(上+走)或(下+走)>85%，总场次>6，差值>3）: {len(rules_85)} 条")
-print(f"  条件2（上/走/下任一>80%，总场次>4）: {len(rules_80)} 条")
-
-# 预加载手工规则
-print("正在加载手工规则...")
-try:
-    manual_rules_all = load_xlsx_rules('docs/规则.xlsx')
-    manual_rules_count = sum(len(rules) for rules in manual_rules_all.values())
-    print(f"已加载手工规则：{manual_rules_count} 条")
-    for pankong_type, rules in manual_rules_all.items():
-        print(f"  {pankong_type}: {len(rules)} 条")
-except Exception as e:
-    print(f"警告：无法加载手工规则：{e}")
-    manual_rules_all = {'0/0.25': [], '0.25/0': [], '0.5/0.25': []}
+print(f"已计算规则：集中度≥85%（总场次≥6）: {len(rules_85)} 条")
+print(f"已计算规则：集中度≥80%（总场次≥5）: {len(rules_80)} 条")
 
 def parse_input_data(data):
     """解析用户输入的A-R列数据"""
@@ -284,27 +265,6 @@ def check():
                 'shang': actual_shang,
                 'xia': actual_xia,
                 'zou': actual_zou,
-            })
-        
-        # 检查手工规则（0/0.25、0.25/0、0.5/0.25）
-        matched_manual = find_matching_rules(row_data, manual_rules_all)
-        
-        result['manual_rules'] = {
-            'matched': len(matched_manual) > 0,
-            'count': len(matched_manual),
-            'rules': []
-        }
-        
-        for rule in matched_manual[:5]:  # 最多显示5条
-            conditions_text = '，且'.join([f"{c[0]}{c[2]}" for c in rule['conditions']])
-            result['manual_rules']['rules'].append({
-                'type': f"{rule['zhu_ke']}/{rule['pankong']}",
-                'conditions': conditions_text,
-                'prediction': rule['prediction'],
-                'n_total': rule['n_total'],
-                'shang': rule['shang'],
-                'xia': rule['xia'],
-                'zou': rule['zou'],
             })
         
         return jsonify(result)
