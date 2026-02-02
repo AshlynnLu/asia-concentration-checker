@@ -581,11 +581,6 @@
                 return;
             }
             
-            if (data['D'] !== '0' || data['F'] !== '0') {
-                alert('当前仅支持主/0/0和客/0/0形态，D和F必须为"0"');
-                return;
-            }
-            
             // 显示加载
             document.getElementById('loading').classList.add('show');
             document.getElementById('resultSection').classList.remove('show');
