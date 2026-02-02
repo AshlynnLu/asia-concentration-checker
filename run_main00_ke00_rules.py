@@ -50,13 +50,19 @@ def compute_rules(rows):
                 outcome = outcome_set(matched_unique)
                 c = Counter(r['U'] for r in matched_unique)
                 shang, xia, zou = c.get('上', 0), c.get('下', 0), c.get('走', 0)
-                n_eff = shang + xia
                 n_total = len(matched_unique)
-                if n_eff == 0:
+                if n_total == 0:
                     continue
-                main_val = max(shang, xia)
-                conc_no_zou = (main_val / n_eff * 100) if n_eff > 0 else 0
-                conc_with_zou = (main_val / n_total * 100) if n_total > 0 else 0
+                
+                # 新条件1的计算
+                shang_zou_ratio = ((shang + zou) / n_total * 100) if n_total > 0 else 0
+                xia_zou_ratio = ((xia + zou) / n_total * 100) if n_total > 0 else 0
+                
+                # 新条件2的计算
+                shang_ratio = (shang / n_total * 100) if n_total > 0 else 0
+                zou_ratio = (zou / n_total * 100) if n_total > 0 else 0
+                xia_ratio = (xia / n_total * 100) if n_total > 0 else 0
+                
                 feat = '，且'.join([c[0] for c in cond_combo])
                 label = f"{morph[0]}/{morph[1]}/{morph[2]}"
                 rec = {
@@ -64,17 +70,24 @@ def compute_rules(rows):
                     '特征': feat,
                     '总场次': n_total,
                     '上': shang, '下': xia, '走': zou,
-                    '符合条件样本数': n_eff,
-                    '集中度(不含走)': round(conc_no_zou, 2),
-                    '集中度(含走)': round(conc_with_zou, 2),
+                    '集中度1(上+走)': round(shang_zou_ratio, 2),
+                    '集中度1(下+走)': round(xia_zou_ratio, 2),
+                    '集中度2(上)': round(shang_ratio, 2),
+                    '集中度2(走)': round(zou_ratio, 2),
+                    '集中度2(下)': round(xia_ratio, 2),
                 }
                 key = (morph, outcome)
-                at_least_5 = shang >= 5 or xia >= 5 or zou >= 5
-                if conc_no_zou >= 85 and n_total >= 6 and at_least_5:
+                
+                # 新条件1：((上+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (上-走) > 3) OR ((下+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (下-走) > 3)
+                cond1_shang = shang_zou_ratio > 85 and n_total > 6 and (shang - zou) > 3
+                cond1_xia = xia_zou_ratio > 85 and n_total > 6 and (xia - zou) > 3
+                if cond1_shang or cond1_xia:
                     if key not in seen_85 or n_cond < seen_85[key][0]:
                         seen_85[key] = (n_cond, rec)
                     all_matched_game_keys.update(outcome)
-                if conc_with_zou >= 80 and n_total >= 5:
+                
+                # 新条件2：(上/(上+走+下) > 80% OR 走/(上+走+下) > 80% OR 下/(上+走+下) > 80%) AND (上+走+下) > 4
+                if (shang_ratio > 80 or zou_ratio > 80 or xia_ratio > 80) and n_total > 4:
                     if key not in seen_80 or n_cond < seen_80[key][0]:
                         seen_80[key] = (n_cond, rec)
                     all_matched_game_keys.update(outcome)
@@ -105,25 +118,25 @@ def main():
     print(f"  {n_any} 场 / {base_u} 场（主/0/0 + 客/0/0 总场次）")
     print()
 
-    # 条件1：除去走盘，集中度≥85%，总场次≥6
-    rules_85.sort(key=lambda x: (-x['集中度(不含走)'], -x['符合条件样本数'], x['类型'], x['特征']))
+    # 条件1：((上+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (上-走) > 3) OR ((下+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (下-走) > 3)
+    rules_85.sort(key=lambda x: (-max(x['集中度1(上+走)'], x['集中度1(下+走)']), -x['总场次'], x['类型'], x['特征']))
     print("=" * 70)
-    print("1. 除去走盘的，集中度≥85%（总场次≥6）")
+    print("1. 条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3")
     print("=" * 70)
     print(f"规则数: {len(rules_85)}")
     for r in rules_85:
-        print(f"  {r['类型']}；{r['特征']}；集中度 {r['集中度(不含走)']}%；"
-              f"样本数 {r['符合条件样本数']}；总场次 {r['总场次']}；上{r['上']}下{r['下']}走{r['走']}")
+        print(f"  {r['类型']}；{r['特征']}；(上+走)比例 {r['集中度1(上+走)']}%；(下+走)比例 {r['集中度1(下+走)']}%；"
+              f"总场次 {r['总场次']}；上{r['上']}下{r['下']}走{r['走']}")
     print()
 
-    # 条件2：算上走盘，集中度≥80%，总场次≥5
-    rules_80.sort(key=lambda x: (-x['集中度(含走)'], -x['总场次'], x['类型'], x['特征']))
+    # 条件2：(上/(上+走+下) > 80% OR 走/(上+走+下) > 80% OR 下/(上+走+下) > 80%) AND (上+走+下) > 4
+    rules_80.sort(key=lambda x: (-max(x['集中度2(上)'], x['集中度2(走)'], x['集中度2(下)']), -x['总场次'], x['类型'], x['特征']))
     print("=" * 70)
-    print("2. 算上走盘的，集中度≥80%（总场次≥5）")
+    print("2. 条件2：上/走/下任一比例>80%，总场次>4")
     print("=" * 70)
     print(f"规则数: {len(rules_80)}")
     for r in rules_80:
-        print(f"  {r['类型']}；{r['特征']}；集中度(含走) {r['集中度(含走)']}%；"
+        print(f"  {r['类型']}；{r['特征']}；上比例 {r['集中度2(上)']}%；走比例 {r['集中度2(走)']}%；下比例 {r['集中度2(下)']}%；"
               f"总场次 {r['总场次']}；上{r['上']}下{r['下']}走{r['走']}")
     print()
     print("说明: 统计按场次去重；同一批匹配场次只保留条件条数最少的一条（避免 G/I/K 等包含重复）。")

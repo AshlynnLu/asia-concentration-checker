@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from analyze_asia_concentration import load_xlsx, filter_rows, unique_by_game, RED_CONDITIONS, _no_duplicate_col, _RANGE_EPS
 from itertools import combinations
 from collections import Counter
+from manual_rules import load_xlsx_rules, find_matching_rules
 
 app = Flask(__name__)
 
@@ -39,34 +40,44 @@ def precompute_rules():
                 matched_unique = unique_by_game(matched)
                 c = Counter(r['U'] for r in matched_unique)
                 shang, xia, zou = c.get('上', 0), c.get('下', 0), c.get('走', 0)
-                n_eff = shang + xia
                 n_total = len(matched_unique)
                 
-                if n_eff == 0:
+                if n_total == 0:
                     continue
                 
-                main_val = max(shang, xia)
-                conc_no_zou = (main_val / n_eff * 100) if n_eff > 0 else 0
-                conc_with_zou = (main_val / n_total * 100) if n_total > 0 else 0
+                # 新条件1的计算
+                shang_zou_ratio = ((shang + zou) / n_total * 100) if n_total > 0 else 0
+                xia_zou_ratio = ((xia + zou) / n_total * 100) if n_total > 0 else 0
+                
+                # 新条件2的计算
+                shang_ratio = (shang / n_total * 100) if n_total > 0 else 0
+                zou_ratio = (zou / n_total * 100) if n_total > 0 else 0
+                xia_ratio = (xia / n_total * 100) if n_total > 0 else 0
                 
                 feat = '，且'.join([c[0] for c in cond_combo])
                 rule_info = {
                     'morph': morph,
                     'feature': feat,
                     'conditions': kw,
-                    'conc_no_zou': conc_no_zou,
-                    'conc_with_zou': conc_with_zou,
+                    'shang_zou_ratio': shang_zou_ratio,
+                    'xia_zou_ratio': xia_zou_ratio,
+                    'shang_ratio': shang_ratio,
+                    'zou_ratio': zou_ratio,
+                    'xia_ratio': xia_ratio,
                     'n_total': n_total,
-                    'n_eff': n_eff,
                     'shang': shang,
                     'xia': xia,
                     'zou': zou,
                 }
                 
-                at_least_5 = shang >= 5 or xia >= 5 or zou >= 5
-                if conc_no_zou >= 85 and n_total >= 6 and at_least_5:
+                # 新条件1：((上+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (上-走) > 3) OR ((下+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (下-走) > 3)
+                cond1_shang = shang_zou_ratio > 85 and n_total > 6 and (shang - zou) > 3
+                cond1_xia = xia_zou_ratio > 85 and n_total > 6 and (xia - zou) > 3
+                if cond1_shang or cond1_xia:
                     rules_85.append(rule_info)
-                if conc_with_zou >= 80 and n_total >= 5:
+                
+                # 新条件2：(上/(上+走+下) > 80% OR 走/(上+走+下) > 80% OR 下/(上+走+下) > 80%) AND (上+走+下) > 4
+                if (shang_ratio > 80 or zou_ratio > 80 or xia_ratio > 80) and n_total > 4:
                     rules_80.append(rule_info)
     
     return rules_85, rules_80
@@ -75,6 +86,18 @@ print("正在预计算规则...")
 rules_85, rules_80 = precompute_rules()
 print(f"已计算规则：集中度≥85%（总场次≥6）: {len(rules_85)} 条")
 print(f"已计算规则：集中度≥80%（总场次≥5）: {len(rules_80)} 条")
+
+# 预加载手工规则
+print("正在加载手工规则...")
+try:
+    manual_rules_all = load_xlsx_rules('docs/规则.xlsx')
+    manual_rules_count = sum(len(rules) for rules in manual_rules_all.values())
+    print(f"已加载手工规则：{manual_rules_count} 条")
+    for pankong_type, rules in manual_rules_all.items():
+        print(f"  {pankong_type}: {len(rules)} 条")
+except Exception as e:
+    print(f"警告：无法加载手工规则：{e}")
+    manual_rules_all = {'0/0.25': [], '0.25/0': [], '0.5/0.25': []}
 
 def parse_input_data(data):
     """解析用户输入的A-R列数据"""
@@ -219,18 +242,19 @@ def check():
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
             actual_n_total = len(actual_matched)
-            actual_n_eff = actual_shang + actual_xia
-            actual_main_val = max(actual_shang, actual_xia)
-            actual_conc_no_zou = (actual_main_val / actual_n_eff * 100) if actual_n_eff > 0 else 0
+            
+            # 计算新条件1的集中度显示值（取较大的一个比例）
+            actual_shang_zou_ratio = ((actual_shang + actual_zou) / actual_n_total * 100) if actual_n_total > 0 else 0
+            actual_xia_zou_ratio = ((actual_xia + actual_zou) / actual_n_total * 100) if actual_n_total > 0 else 0
+            actual_cond1_ratio = max(actual_shang_zou_ratio, actual_xia_zou_ratio)
             
             result['condition1']['rules'].append({
                 'feature': rule['feature'],
-                'conc': round(actual_conc_no_zou, 2),  # 使用实际筛选结果的集中度
-                'n_total': actual_n_total,  # 使用实际筛选结果的总场次
-                'n_eff': actual_n_eff,  # 使用实际筛选结果的有效场次
-                'shang': actual_shang,  # 使用实际筛选结果的上
-                'xia': actual_xia,  # 使用实际筛选结果的下
-                'zou': actual_zou,  # 使用实际筛选结果的走
+                'conc': round(actual_cond1_ratio, 2),
+                'n_total': actual_n_total,
+                'shang': actual_shang,
+                'xia': actual_xia,
+                'zou': actual_zou,
             })
         
         for rule in matched_80[:5]:
@@ -240,17 +264,41 @@ def check():
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
             actual_n_total = len(actual_matched)
-            actual_n_eff = actual_shang + actual_xia
-            actual_main_val = max(actual_shang, actual_xia)
-            actual_conc_with_zou = (actual_main_val / actual_n_total * 100) if actual_n_total > 0 else 0
+            
+            # 计算新条件2的集中度显示值（取三者中最大的比例）
+            actual_shang_ratio = (actual_shang / actual_n_total * 100) if actual_n_total > 0 else 0
+            actual_zou_ratio = (actual_zou / actual_n_total * 100) if actual_n_total > 0 else 0
+            actual_xia_ratio = (actual_xia / actual_n_total * 100) if actual_n_total > 0 else 0
+            actual_cond2_ratio = max(actual_shang_ratio, actual_zou_ratio, actual_xia_ratio)
             
             result['condition2']['rules'].append({
                 'feature': rule['feature'],
-                'conc': round(actual_conc_with_zou, 2),  # 使用实际筛选结果的集中度
-                'n_total': actual_n_total,  # 使用实际筛选结果的总场次
-                'shang': actual_shang,  # 使用实际筛选结果的上
-                'xia': actual_xia,  # 使用实际筛选结果的下
-                'zou': actual_zou,  # 使用实际筛选结果的走
+                'conc': round(actual_cond2_ratio, 2),
+                'n_total': actual_n_total,
+                'shang': actual_shang,
+                'xia': actual_xia,
+                'zou': actual_zou,
+            })
+        
+        # 检查手工规则（0/0.25、0.25/0、0.5/0.25）
+        matched_manual = find_matching_rules(row_data, manual_rules_all)
+        
+        result['manual_rules'] = {
+            'matched': len(matched_manual) > 0,
+            'count': len(matched_manual),
+            'rules': []
+        }
+        
+        for rule in matched_manual[:5]:  # 最多显示5条
+            conditions_text = '，且'.join([f"{c[0]}{c[2]}" for c in rule['conditions']])
+            result['manual_rules']['rules'].append({
+                'type': f"{rule['zhu_ke']}/{rule['pankong']}",
+                'conditions': conditions_text,
+                'prediction': rule['prediction'],
+                'n_total': rule['n_total'],
+                'shang': rule['shang'],
+                'xia': rule['xia'],
+                'zou': rule['zou'],
             })
         
         return jsonify(result)

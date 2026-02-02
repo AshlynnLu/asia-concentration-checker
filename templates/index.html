@@ -233,9 +233,10 @@
         <div class="info-box">
             <strong>说明：</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>条件1：除去走盘的，集中度≥85%（总场次≥6），且上/下/走至少有一项≥5</li>
-                <li>条件2：算上走盘的，集中度≥80%（总场次≥5）</li>
-                <li>仅判断主/0/0和客/0/0形态</li>
+                <li><strong>主/0/0 和 客/0/0：</strong>自动生成规则检测</li>
+                <li style="margin-left: 20px;">条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3</li>
+                <li style="margin-left: 20px;">条件2：上/走/下任一比例>80%，总场次>4</li>
+                <li><strong>其他盘口类型：</strong>手工规则检测（0/0.25、0.25/0、0.5/0.25）</li>
             </ul>
         </div>
         
@@ -328,15 +329,21 @@
         
         <div class="result-section" id="resultSection">
             <div class="result-card" id="result1">
-                <div class="result-title">条件1：除去走盘的，集中度≥85%（总场次≥6），且上/下/走至少有一项≥5</div>
+                <div class="result-title">条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3</div>
                 <div class="result-status" id="status1"></div>
                 <div class="rules-list" id="rules1"></div>
             </div>
             
             <div class="result-card" id="result2">
-                <div class="result-title">条件2：算上走盘的，集中度≥80%（总场次≥5）</div>
+                <div class="result-title">条件2：上/走/下任一比例>80%，总场次>4</div>
                 <div class="result-status" id="status2"></div>
                 <div class="rules-list" id="rules2"></div>
+            </div>
+            
+            <div class="result-card" id="result3">
+                <div class="result-title">手工规则匹配（0/0.25、0.25/0、0.5/0.25）</div>
+                <div class="result-status" id="status3"></div>
+                <div class="rules-list" id="rules3"></div>
             </div>
         </div>
     </div>
@@ -359,11 +366,6 @@
             // 验证形态
             if (data['B'] !== '主' && data['B'] !== '客') {
                 alert('B列必须是"主"或"客"');
-                return;
-            }
-            
-            if (data['D'] !== '0' || data['F'] !== '0') {
-                alert('当前仅支持主/0/0和客/0/0形态，D和F必须为"0"');
                 return;
             }
             
@@ -414,7 +416,7 @@
                     html += `
                         <div class="rule-item">
                             <strong>特征：</strong>${rule.feature}<br>
-                            集中度：${rule.conc}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                            集中度：${rule.conc}% | 总场次：${rule.n_total} | 
                             上${rule.shang}下${rule.xia}走${rule.zou}
                         </div>
                     `;
@@ -454,6 +456,39 @@
                 status2.className = 'result-status status-not-matched';
                 status2.textContent = '✗ 不满足条件';
                 rules2.innerHTML = '';
+            }
+            
+            // 手工规则
+            const manual = result.manual_rules;
+            if (manual) {
+                const card3 = document.getElementById('result3');
+                const status3 = document.getElementById('status3');
+                const rules3 = document.getElementById('rules3');
+                
+                if (manual.matched) {
+                    card3.className = 'result-card matched';
+                    status3.className = 'result-status status-matched';
+                    status3.textContent = `✓ 匹配手工规则（${manual.count} 条）`;
+                    
+                    let html = '';
+                    for (let rule of manual.rules) {
+                        html += `
+                            <div class="rule-item">
+                                <strong>类型：</strong>${rule.type}<br>
+                                <strong>条件：</strong>${rule.conditions}<br>
+                                <strong>预测：</strong>${rule.prediction} | 
+                                总场次：${rule.n_total} | 
+                                上${rule.shang}下${rule.xia}走${rule.zou}
+                            </div>
+                        `;
+                    }
+                    rules3.innerHTML = html;
+                } else {
+                    card3.className = 'result-card not-matched';
+                    status3.className = 'result-status status-not-matched';
+                    status3.textContent = '✗ 未匹配手工规则';
+                    rules3.innerHTML = '';
+                }
             }
             
             document.getElementById('resultSection').classList.add('show');
