@@ -600,9 +600,8 @@
                             count: matched_85.length,
                             rules: matched_85.map(r => ({
                                 feature: r.feature,
-                                conc: r.conc_no_zou,
+                                conc: Math.max(r.shang_zou_ratio, r.xia_zou_ratio),
                                 n_total: r.n_total,
-                                n_eff: r.n_eff,
                                 shang: r.shang,
                                 xia: r.xia,
                                 zou: r.zou
@@ -613,7 +612,7 @@
                             count: matched_80.length,
                             rules: matched_80.map(r => ({
                                 feature: r.feature,
-                                conc: r.conc_with_zou,
+                                conc: Math.max(r.shang_ratio, r.zou_ratio, r.xia_ratio),
                                 n_total: r.n_total,
                                 shang: r.shang,
                                 xia: r.xia,
@@ -659,7 +658,7 @@
                             <div class="rule-item pred-shang">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge shang">预测：上盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -679,7 +678,7 @@
                             <div class="rule-item pred-xia">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge xia">预测：下盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
