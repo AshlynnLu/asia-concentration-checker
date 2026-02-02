@@ -17,12 +17,10 @@ def export_rules():
             'morph': list(rule['morph']),  # tuple转list
             'feature': rule['feature'],
             'conditions': {k: (list(v) if isinstance(v, tuple) else v) for k, v in rule['conditions'].items()},
-            'shang_zou_ratio': rule['shang_zou_ratio'],
-            'xia_zou_ratio': rule['xia_zou_ratio'],
-            'shang_ratio': rule['shang_ratio'],
-            'zou_ratio': rule['zou_ratio'],
-            'xia_ratio': rule['xia_ratio'],
+            'conc_no_zou': rule['conc_no_zou'],
+            'conc_with_zou': rule['conc_with_zou'],
             'n_total': rule['n_total'],
+            'n_eff': rule['n_eff'],
             'shang': rule['shang'],
             'xia': rule['xia'],
             'zou': rule['zou'],
@@ -38,8 +36,8 @@ def export_rules():
             'count_85': len(rules_85_json),
             'count_80': len(rules_80_json),
             'description': {
-                'condition1': '(上+走)或(下+走)比例>85%，总场次>6，差值>3',
-                'condition2': '上/走/下任一比例>80%，总场次>4'
+                'condition1': '除去走盘的，集中度≥85%（总场次≥6）',
+                'condition2': '算上走盘的，集中度≥80%（总场次≥5）'
             }
         }
     }

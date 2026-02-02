@@ -495,9 +495,7 @@
             const D = String(rowData.D || '').trim();
             const F = String(rowData.F || '').trim();
             
-            // 检查主客
-            if (B !== '主' && B !== '客') return matched;
-            
+
             const morph = [B, D, F];
             
             // 提取数值列
@@ -643,13 +641,6 @@
                 card1.className = 'result-card matched';
                 status1.className = 'result-status status-matched';
                 
-                // 为每个规则计算条件1的集中度（取(上+走)或(下+走)的较大值）
-                cond1.rules.forEach(rule => {
-                    const shangZouRatio = ((rule.shang + rule.zou) / rule.n_total * 100);
-                    const xiaZouRatio = ((rule.xia + rule.zou) / rule.n_total * 100);
-                    rule.conc = Math.max(shangZouRatio, xiaZouRatio);
-                });
-                
                 // 按预测方向分组
                 const shangRules = cond1.rules.filter(r => r.shang > r.xia);
                 const xiaRules = cond1.rules.filter(r => r.xia > r.shang);
@@ -668,7 +659,7 @@
                             <div class="rule-item pred-shang">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge shang">预测：上盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -688,7 +679,7 @@
                             <div class="rule-item pred-xia">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge xia">预测：下盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -733,14 +724,6 @@
             if (cond2.matched) {
                 card2.className = 'result-card matched';
                 status2.className = 'result-status status-matched';
-                
-                // 为每个规则计算条件2的集中度（取上/走/下的最大值）
-                cond2.rules.forEach(rule => {
-                    const shangRatio = (rule.shang / rule.n_total * 100);
-                    const zouRatio = (rule.zou / rule.n_total * 100);
-                    const xiaRatio = (rule.xia / rule.n_total * 100);
-                    rule.conc = Math.max(shangRatio, zouRatio, xiaRatio);
-                });
                 
                 // 按预测方向分组
                 const shangRules = cond2.rules.filter(r => r.shang > r.xia);
