@@ -495,9 +495,8 @@
             const D = String(rowData.D || '').trim();
             const F = String(rowData.F || '').trim();
             
-            // 只检查主/0/0和客/0/0
+            // 检查主客
             if (B !== '主' && B !== '客') return matched;
-            if (D !== '0' || F !== '0') return matched;
             
             const morph = [B, D, F];
             
