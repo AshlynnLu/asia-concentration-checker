@@ -28,8 +28,8 @@ def precompute_rules():
     target_morph_groups = [
         [('主', d, f) for d, f in MORPH_GROUP_DF] + [('客', d, f) for d, f in MORPH_GROUP_DF],
     ]
-    rules_85 = []  # 集中度≥85%，总场次≥6
-    rules_80 = []  # 集中度≥80%，总场次≥5
+    rules_85 = []  # 条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3
+    rules_80 = []  # 条件2：上/走/下任一比例>80%，总场次>4
 
     for morph_group in target_morph_groups:
         for n_cond in range(1, min(4, len(RED_CONDITIONS) + 1)):
@@ -89,8 +89,8 @@ def precompute_rules():
 
 print("正在预计算规则...")
 rules_85, rules_80 = precompute_rules()
-print(f"已计算规则：集中度≥85%（总场次≥6）: {len(rules_85)} 条")
-print(f"已计算规则：集中度≥80%（总场次≥5）: {len(rules_80)} 条")
+print(f"已计算规则 - 条件1 [(上+走)或(下+走)>85%, 总场次>6, 差值>3]: {len(rules_85)} 条")
+print(f"已计算规则 - 条件2 [上/走/下任一>80%, 总场次>4]: {len(rules_80)} 条")
 
 def parse_input_data(data):
     """解析用户输入的A-R列数据"""
