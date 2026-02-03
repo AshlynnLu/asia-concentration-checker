@@ -599,9 +599,9 @@
                             count: matched_85.length,
                             rules: matched_85.map(r => ({
                                 feature: r.feature,
-                                conc: r.conc_no_zou,
+                                shang_zou_ratio: r.shang_zou_ratio,
+                                xia_zou_ratio: r.xia_zou_ratio,
                                 n_total: r.n_total,
-                                n_eff: r.n_eff,
                                 shang: r.shang,
                                 xia: r.xia,
                                 zou: r.zou
@@ -612,7 +612,9 @@
                             count: matched_80.length,
                             rules: matched_80.map(r => ({
                                 feature: r.feature,
-                                conc: r.conc_with_zou,
+                                shang_ratio: r.shang_ratio,
+                                zou_ratio: r.zou_ratio,
+                                xia_ratio: r.xia_ratio,
                                 n_total: r.n_total,
                                 shang: r.shang,
                                 xia: r.xia,
@@ -658,7 +660,7 @@
                             <div class="rule-item pred-shang">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge shang">预测：上盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                (上+走)比例：${rule.shang_zou_ratio.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -678,7 +680,7 @@
                             <div class="rule-item pred-xia">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge xia">预测：下盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 有效场次：${rule.n_eff} | 
+                                (下+走)比例：${rule.xia_zou_ratio.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -698,7 +700,7 @@
                             <div class="rule-item">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge zou">预测：走盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                走比例：${(rule.zou / rule.n_total * 100).toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -742,7 +744,7 @@
                             <div class="rule-item pred-shang">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge shang">预测：上盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                上比例：${rule.shang_ratio.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -762,7 +764,7 @@
                             <div class="rule-item pred-xia">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge xia">预测：下盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                下比例：${rule.xia_ratio.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
@@ -782,7 +784,7 @@
                             <div class="rule-item">
                                 <strong>特征：</strong>${rule.feature}
                                 <span class="prediction-badge zou">预测：走盘</span><br>
-                                集中度：${rule.conc.toFixed(2)}% | 总场次：${rule.n_total} | 
+                                走比例：${rule.zou_ratio.toFixed(2)}% | 总场次：${rule.n_total} | 
                                 上${rule.shang}下${rule.xia}走${rule.zou}
                             </div>
                         `;
