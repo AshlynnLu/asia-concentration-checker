@@ -19,15 +19,14 @@ print("正在加载数据...")
 all_rows = load_xlsx('docs/20252026欧洲FB.xlsx')
 print(f"已加载 {len(all_rows)} 条数据")
 
-# 形态组：(D,F) = 0/0, 0/0.25, 0.25/0, 0.5/0.25 合并统计
+# 形态组：(D,F) = 0/0, 0/0.25, 0.25/0, 0.5/0.25，主+客合并统计（与手动筛全表一致）
 MORPH_GROUP_DF = [('0', '0'), ('0', '0.25'), ('0.25', '0'), ('0.5', '0.25')]
 
 def precompute_rules():
-    """预计算所有符合条件的规则（按形态组：0/0、0/0.25、0.25/0、0.5/0.25 合并）"""
-    # 主、客各一组，每组包含 4 种 (D,F)
+    """预计算所有符合条件的规则（主+客 + 4种(D,F) 合并为一大组）"""
+    # 一大组：主与客各 4 种 (D,F)，共 8 个 morph，总场次与手动筛全表一致
     target_morph_groups = [
-        [('主', d, f) for d, f in MORPH_GROUP_DF],
-        [('客', d, f) for d, f in MORPH_GROUP_DF],
+        [('主', d, f) for d, f in MORPH_GROUP_DF] + [('客', d, f) for d, f in MORPH_GROUP_DF],
     ]
     rules_85 = []  # 集中度≥85%，总场次≥6
     rules_80 = []  # 集中度≥80%，总场次≥5
