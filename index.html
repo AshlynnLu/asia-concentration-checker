@@ -492,6 +492,10 @@
             if (B !== '主' && B !== '客') return matched;
             
             const morph = [B, D, F];
+            function morphInGroup(morphGroup, m) {
+                if (!morphGroup || !Array.isArray(morphGroup)) return false;
+                return morphGroup.some(g => JSON.stringify(g) === JSON.stringify(m));
+            }
             
             // 提取数值列
             function getNum(col) {
@@ -511,10 +515,10 @@
             
             const colValues = { G, I, K, N, P, Q, R };
             
-            // 检查每个规则
+            // 检查每个规则（形态组 0/0、0/0.25、0.25/0、0.5/0.25 任一即匹配）
             for (const rule of rules) {
-                // 检查形态
-                if (JSON.stringify(rule.morph) !== JSON.stringify(morph)) continue;
+                const group = rule.morph_group || [rule.morph];
+                if (!morphInGroup(group, morph)) continue;
                 
                 // 检查条件
                 let match = true;

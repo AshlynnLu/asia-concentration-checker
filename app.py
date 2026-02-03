@@ -19,49 +19,50 @@ print("正在加载数据...")
 all_rows = load_xlsx('docs/20252026欧洲FB.xlsx')
 print(f"已加载 {len(all_rows)} 条数据")
 
-# 预计算符合条件的规则
+# 形态组：(D,F) = 0/0, 0/0.25, 0.25/0, 0.5/0.25 合并统计
+MORPH_GROUP_DF = [('0', '0'), ('0', '0.25'), ('0.25', '0'), ('0.5', '0.25')]
+
 def precompute_rules():
-    """预计算所有符合条件的规则"""
-    target_morphs = [
-        ('主', '0', '0'), ('客', '0', '0'),  # 原有的
-        ('主', '0', '0.25'), ('客', '0', '0.25'),  # 新增
-        ('主', '0.25', '0'), ('客', '0.25', '0'),  # 新增
-        ('主', '0.5', '0.25'), ('客', '0.5', '0.25'),  # 新增
-        ('主', '0.25', '0.5'), ('客', '0.25', '0.5'),  # 新增
+    """预计算所有符合条件的规则（按形态组：0/0、0/0.25、0.25/0、0.5/0.25 合并）"""
+    # 主、客各一组，每组包含 4 种 (D,F)
+    target_morph_groups = [
+        [('主', d, f) for d, f in MORPH_GROUP_DF],
+        [('客', d, f) for d, f in MORPH_GROUP_DF],
     ]
     rules_85 = []  # 集中度≥85%，总场次≥6
     rules_80 = []  # 集中度≥80%，总场次≥5
-    
-    for morph in target_morphs:
+
+    for morph_group in target_morph_groups:
         for n_cond in range(1, min(4, len(RED_CONDITIONS) + 1)):
             for cond_combo in combinations(RED_CONDITIONS, n_cond):
                 if not _no_duplicate_col(cond_combo):
                     continue
-                
+
                 kw = {c[1]: c[2] for c in cond_combo}
-                matched = filter_rows(all_rows, morph, **kw)
+                matched = filter_rows(all_rows, morph_group, **kw)
                 if not matched:
                     continue
                 matched_unique = unique_by_game(matched)
                 c = Counter(r['U'] for r in matched_unique)
                 shang, xia, zou = c.get('上', 0), c.get('下', 0), c.get('走', 0)
                 n_total = len(matched_unique)
-                
+
                 if n_total == 0:
                     continue
-                
+
                 # 新条件1的计算
                 shang_zou_ratio = ((shang + zou) / n_total * 100) if n_total > 0 else 0
                 xia_zou_ratio = ((xia + zou) / n_total * 100) if n_total > 0 else 0
-                
+
                 # 新条件2的计算
                 shang_ratio = (shang / n_total * 100) if n_total > 0 else 0
                 zou_ratio = (zou / n_total * 100) if n_total > 0 else 0
                 xia_ratio = (xia / n_total * 100) if n_total > 0 else 0
-                
+
                 feat = '，且'.join([c[0] for c in cond_combo])
                 rule_info = {
-                    'morph': morph,
+                    'morph': morph_group[0],  # 兼容前端显示
+                    'morph_group': morph_group,
                     'feature': feat,
                     'conditions': kw,
                     'shang_zou_ratio': shang_zou_ratio,
@@ -74,17 +75,17 @@ def precompute_rules():
                     'xia': xia,
                     'zou': zou,
                 }
-                
-                # 新条件1：((上+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (上-走) > 3) OR ((下+走)/(上+走+下) > 85% AND (上+走+下) > 6 AND (下-走) > 3)
+
+                # 新条件1
                 cond1_shang = shang_zou_ratio > 85 and n_total > 6 and (shang - zou) > 3
                 cond1_xia = xia_zou_ratio > 85 and n_total > 6 and (xia - zou) > 3
                 if cond1_shang or cond1_xia:
                     rules_85.append(rule_info)
-                
-                # 新条件2：(上/(上+走+下) > 80% OR 走/(上+走+下) > 80% OR 下/(上+走+下) > 80%) AND (上+走+下) > 4
+
+                # 新条件2
                 if (shang_ratio > 80 or zou_ratio > 80 or xia_ratio > 80) and n_total > 4:
                     rules_80.append(rule_info)
-    
+
     return rules_85, rules_80
 
 print("正在预计算规则...")
@@ -154,11 +155,14 @@ def check_conditions(row_data, rules):
     
     G, I, K, N, P, Q, R = get_num('G'), get_num('I'), get_num('K'), get_num('N'), get_num('P'), get_num('Q'), get_num('R')
     
-    # 检查每个规则
+    # 检查每个规则（当前行形态属于该规则的形态组则匹配）
     for rule in rules:
-        if rule['morph'] != morph:
+        group = rule.get('morph_group')
+        if group is None:
+            group = [rule['morph']]
+        if morph not in group:
             continue
-        
+
         # 检查条件是否满足（使用浮点容差，与 filter_rows 一致）
         match = True
         e = _RANGE_EPS
@@ -229,8 +233,9 @@ def check():
         # 添加匹配的规则信息（最多显示5条）
         # 对于每个匹配的规则，重新筛选数据以显示实际结果
         for rule in matched_85[:5]:
-            # 重新筛选数据、按场次去重后统计
-            actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            # 重新筛选数据（按形态组）、按场次去重后统计
+            morph_arg = rule.get('morph_group') or [rule['morph']]
+            actual_matched = filter_rows(all_rows, morph_arg, **rule['conditions'])
             actual_matched = unique_by_game(actual_matched)
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)
@@ -251,8 +256,9 @@ def check():
             })
         
         for rule in matched_80[:5]:
-            # 重新筛选数据、按场次去重后统计
-            actual_matched = filter_rows(all_rows, rule['morph'], **rule['conditions'])
+            # 重新筛选数据（按形态组）、按场次去重后统计
+            morph_arg = rule.get('morph_group') or [rule['morph']]
+            actual_matched = filter_rows(all_rows, morph_arg, **rule['conditions'])
             actual_matched = unique_by_game(actual_matched)
             actual_c = Counter(r['U'] for r in actual_matched)
             actual_shang, actual_xia, actual_zou = actual_c.get('上', 0), actual_c.get('下', 0), actual_c.get('走', 0)

@@ -13,8 +13,8 @@ from app import rules_85, rules_80
 def export_rules():
     # 转换规则为JSON可序列化的格式
     def rule_to_dict(rule):
-        return {
-            'morph': list(rule['morph']),  # tuple转list
+        d = {
+            'morph': list(rule['morph']),  # 兼容：单形态
             'feature': rule['feature'],
             'conditions': {k: (list(v) if isinstance(v, tuple) else v) for k, v in rule['conditions'].items()},
             'shang_zou_ratio': rule['shang_zou_ratio'],
@@ -27,7 +27,10 @@ def export_rules():
             'xia': rule['xia'],
             'zou': rule['zou'],
         }
-    
+        if rule.get('morph_group'):
+            d['morph_group'] = [list(m) for m in rule['morph_group']]
+        return d
+
     rules_85_json = [rule_to_dict(r) for r in rules_85]
     rules_80_json = [rule_to_dict(r) for r in rules_80]
     

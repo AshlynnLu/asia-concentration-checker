@@ -111,8 +111,14 @@ def outcome_set(rows):
 _RANGE_EPS = 1e-9
 
 def filter_rows(rows, morph, **kwargs):
-    """morph = (B, D, F)。kwargs 为各红色列及 Q,R 的阈值。"""
-    out = [r for r in rows if (r['B'], r['D'], r['F']) == morph]
+    """morph = (B, D, F) 或 (B,D,F) 的列表。kwargs 为各红色列及 Q,R 的阈值。"""
+    if isinstance(morph, (list, tuple)) and len(morph) > 0 and isinstance(morph[0], (list, tuple)):
+        # morph 为 (B,D,F) 元组列表
+        morph_set = set(tuple(m) for m in morph)
+        out = [r for r in rows if (r['B'], r['D'], r['F']) in morph_set]
+    else:
+        # 单个 (B, D, F)
+        out = [r for r in rows if (r['B'], r['D'], r['F']) == tuple(morph)]
     e = _RANGE_EPS
     for k, v in kwargs.items():
         if v is None:
