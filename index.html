@@ -345,7 +345,7 @@
             <ul style="margin: 10px 0 0 20px;">
                 <li>条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3</li>
                 <li>条件2：上/走/下任一比例>80%，总场次>4</li>
-                <li>仅判断主/0/0和客/0/0形态</li>
+                <li>仅判断主/客形态（支持多种盘口组合）</li>
             </ul>
         </div>
         
@@ -488,9 +488,8 @@
             const D = String(rowData.D || '').trim();
             const F = String(rowData.F || '').trim();
             
-            // 只检查主/0/0和客/0/0
+            // 只检查主/客
             if (B !== '主' && B !== '客') return matched;
-            if (D !== '0' || F !== '0') return matched;
             
             const morph = [B, D, F];
             
@@ -572,11 +571,6 @@
             // 验证形态
             if (data['B'] !== '主' && data['B'] !== '客') {
                 alert('B列必须是"主"或"客"');
-                return;
-            }
-            
-            if (data['D'] !== '0' || data['F'] !== '0') {
-                alert('当前仅支持主/0/0和客/0/0形态，D和F必须为"0"');
                 return;
             }
             

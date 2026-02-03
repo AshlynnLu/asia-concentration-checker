@@ -71,8 +71,6 @@ def load_xlsx(path):
         u_val = str(grid[r].get(U, '')).strip()
         if not u_val or u_val not in ('上', '下', '走'):
             continue
-        if d_val != f_val:
-            continue
         b, d, f = str(grid[r].get(B, '')).strip(), d_val, f_val
         row = {
             'X': f"{b}/{d}/{f}",
