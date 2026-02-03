@@ -128,39 +128,39 @@ def filter_rows(rows, morph, **kwargs):
         elif k == 'K_le':
             out = [r for r in out if r['K'] is not None and r['K'] <= v + e]
         elif k == 'K_lt':
-            out = [r for r in out if r['K'] is not None and r['K'] < v + e]
+            out = [r for r in out if r['K'] is not None and r['K'] < v - e]
         elif k == 'K_gt':
-            out = [r for r in out if r['K'] is not None and r['K'] > v - e]
+            out = [r for r in out if r['K'] is not None and r['K'] > v + e]
         elif k == 'N_ge':
             out = [r for r in out if r['N'] is not None and r['N'] >= v - e]
         elif k == 'N_le':
             out = [r for r in out if r['N'] is not None and r['N'] <= v + e]
         elif k == 'N_lt':
-            out = [r for r in out if r['N'] is not None and r['N'] < v + e]
+            out = [r for r in out if r['N'] is not None and r['N'] < v - e]
         elif k == 'N_gt':
-            out = [r for r in out if r['N'] is not None and r['N'] > v - e]
+            out = [r for r in out if r['N'] is not None and r['N'] > v + e]
         elif k == 'I_ge':
             out = [r for r in out if r['I'] is not None and r['I'] >= v - e]
         elif k == 'I_le':
             out = [r for r in out if r['I'] is not None and r['I'] <= v + e]
         elif k == 'I_lt':
-            out = [r for r in out if r['I'] is not None and r['I'] < v + e]
+            out = [r for r in out if r['I'] is not None and r['I'] < v - e]
         elif k == 'P_ge':
             out = [r for r in out if r['P'] is not None and r['P'] >= v - e]
         elif k == 'P_le':
             out = [r for r in out if r['P'] is not None and r['P'] <= v + e]
         elif k == 'P_lt':
-            out = [r for r in out if r['P'] is not None and r['P'] < v + e]
+            out = [r for r in out if r['P'] is not None and r['P'] < v - e]
         elif k == 'P_gt':
-            out = [r for r in out if r['P'] is not None and r['P'] > v - e]
+            out = [r for r in out if r['P'] is not None and r['P'] > v + e]
         elif k == 'Q_lt':
-            out = [r for r in out if r['Q'] is not None and r['Q'] < v + e]
+            out = [r for r in out if r['Q'] is not None and r['Q'] < v - e]
         elif k == 'Q_gt':
-            out = [r for r in out if r['Q'] is not None and r['Q'] > v - e]
+            out = [r for r in out if r['Q'] is not None and r['Q'] > v + e]
         elif k == 'R_lt':
-            out = [r for r in out if r['R'] is not None and r['R'] < v + e]
+            out = [r for r in out if r['R'] is not None and r['R'] < v - e]
         elif k == 'R_gt':
-            out = [r for r in out if r['R'] is not None and r['R'] > v - e]
+            out = [r for r in out if r['R'] is not None and r['R'] > v + e]
         elif k == 'R_ge':
             out = [r for r in out if r['R'] is not None and r['R'] >= v - e]
         elif k == 'E_ge':
@@ -172,7 +172,7 @@ def filter_rows(rows, morph, **kwargs):
         elif k == 'G_le':
             out = [r for r in out if r['G'] is not None and r['G'] <= v + e]
         elif k == 'G_lt':
-            out = [r for r in out if r['G'] is not None and r['G'] < v + e]
+            out = [r for r in out if r['G'] is not None and r['G'] < v - e]
         elif k == 'G_range':
             out = [r for r in out if r['G'] is not None and v[0] - e <= r['G'] <= v[1] + e]
         elif k == 'I_range':
@@ -194,7 +194,7 @@ def filter_rows(rows, morph, **kwargs):
         elif k == 'H_gt':
             out = [r for r in out if r['H'] is not None and r['H'] > v - e]
         elif k == 'H_lt':
-            out = [r for r in out if r['H'] is not None and r['H'] < v + e]
+            out = [r for r in out if r['H'] is not None and r['H'] < v - e]
     return out
 
 def stats(rows):
