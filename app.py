@@ -9,7 +9,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from analyze_asia_concentration import load_xlsx, filter_rows, unique_by_game, RED_CONDITIONS, _no_duplicate_col, _RANGE_EPS
-from load_manual_rules import load_manual_rules
 from itertools import combinations
 from collections import Counter
 
@@ -23,20 +22,17 @@ print(f"已加载 {len(all_rows)} 条数据")
 # 预计算符合条件的规则
 def precompute_rules():
     """预计算所有符合条件的规则"""
-    # 区分自动计算和手工规则
-    auto_morphs = [('主', '0', '0'), ('客', '0', '0')]  # 自动计算
-    manual_morphs = [
-        ('主', '0', '0.25'), ('客', '0', '0.25'),
-        ('主', '0.25', '0'), ('客', '0.25', '0'),
-        ('主', '0.5', '0.25'), ('客', '0.5', '0.25'),
+    target_morphs = [
+        ('主', '0', '0'), ('客', '0', '0'),  # 原有的
+        ('主', '0', '0.25'), ('客', '0', '0.25'),  # 新增
+        ('主', '0.25', '0'), ('客', '0.25', '0'),  # 新增
+        ('主', '0.5', '0.25'), ('客', '0.5', '0.25'),  # 新增
+        ('主', '0.25', '0.5'), ('客', '0.25', '0.5'),  # 新增
     ]
-    
     rules_85 = []  # 集中度≥85%，总场次≥6
     rules_80 = []  # 集中度≥80%，总场次≥5
     
-    # 1. 处理自动计算的形态（主/0/0 和 客/0/0）
-    print("正在计算自动规则（主/0/0 和 客/0/0）...")
-    for morph in auto_morphs:
+    for morph in target_morphs:
         for n_cond in range(1, min(4, len(RED_CONDITIONS) + 1)):
             for cond_combo in combinations(RED_CONDITIONS, n_cond):
                 if not _no_duplicate_col(cond_combo):
@@ -89,66 +85,12 @@ def precompute_rules():
                 if (shang_ratio > 80 or zou_ratio > 80 or xia_ratio > 80) and n_total > 4:
                     rules_80.append(rule_info)
     
-    # 2. 处理手工规则（0/0.25、0.25/0、0.5/0.25）
-    print("正在加载手工规则...")
-    manual_rules_dict = load_manual_rules()
-    print(f"已加载 {sum(len(rules) for rules in manual_rules_dict.values())} 条手工规则")
-    
-    for morph in manual_morphs:
-        if morph not in manual_rules_dict:
-            continue
-        
-        manual_rules = manual_rules_dict[morph]
-        for manual_rule in manual_rules:
-            # 应用手工规则到原始数据
-            matched = filter_rows(all_rows, morph, **manual_rule['conditions'])
-            if not matched:
-                continue
-            matched_unique = unique_by_game(matched)
-            c = Counter(r['U'] for r in matched_unique)
-            shang, xia, zou = c.get('上', 0), c.get('下', 0), c.get('走', 0)
-            n_total = len(matched_unique)
-            
-            if n_total == 0:
-                continue
-            
-            # 计算比例
-            shang_zou_ratio = ((shang + zou) / n_total * 100) if n_total > 0 else 0
-            xia_zou_ratio = ((xia + zou) / n_total * 100) if n_total > 0 else 0
-            shang_ratio = (shang / n_total * 100) if n_total > 0 else 0
-            zou_ratio = (zou / n_total * 100) if n_total > 0 else 0
-            xia_ratio = (xia / n_total * 100) if n_total > 0 else 0
-            
-            rule_info = {
-                'morph': morph,
-                'feature': manual_rule['feature'],
-                'conditions': manual_rule['conditions'],
-                'shang_zou_ratio': shang_zou_ratio,
-                'xia_zou_ratio': xia_zou_ratio,
-                'shang_ratio': shang_ratio,
-                'zou_ratio': zou_ratio,
-                'xia_ratio': xia_ratio,
-                'n_total': n_total,
-                'shang': shang,
-                'xia': xia,
-                'zou': zou,
-            }
-            
-            # 检查是否满足条件1或条件2
-            cond1_shang = shang_zou_ratio > 85 and n_total > 6 and (shang - zou) > 3
-            cond1_xia = xia_zou_ratio > 85 and n_total > 6 and (xia - zou) > 3
-            if cond1_shang or cond1_xia:
-                rules_85.append(rule_info)
-            
-            if (shang_ratio > 80 or zou_ratio > 80 or xia_ratio > 80) and n_total > 4:
-                rules_80.append(rule_info)
-    
     return rules_85, rules_80
 
 print("正在预计算规则...")
 rules_85, rules_80 = precompute_rules()
-print(f"已计算规则 - 条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3: {len(rules_85)} 条")
-print(f"已计算规则 - 条件2：上/走/下任一比例>80%，总场次>4: {len(rules_80)} 条")
+print(f"已计算规则：集中度≥85%（总场次≥6）: {len(rules_85)} 条")
+print(f"已计算规则：集中度≥80%（总场次≥5）: {len(rules_80)} 条")
 
 def parse_input_data(data):
     """解析用户输入的A-R列数据"""
