@@ -343,8 +343,8 @@
         <div class="info-box">
             <strong>说明：</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>条件1：除去走盘的，集中度≥85%（总场次≥6）</li>
-                <li>条件2：算上走盘的，集中度≥80%（总场次≥5）</li>
+                <li>条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3</li>
+                <li>条件2：上/走/下任一比例>80%，总场次>4</li>
                 <li>仅判断主/0/0和客/0/0形态</li>
             </ul>
         </div>
@@ -447,13 +447,13 @@
         
         <div class="result-section" id="resultSection">
             <div class="result-card" id="result1">
-                <div class="result-title">条件1：除去走盘的，集中度≥85%（总场次≥6）</div>
+                <div class="result-title">条件1：(上+走)或(下+走)比例>85%，总场次>6，差值>3</div>
                 <div class="result-status" id="status1"></div>
                 <div class="rules-list" id="rules1"></div>
             </div>
             
             <div class="result-card" id="result2">
-                <div class="result-title">条件2：算上走盘的，集中度≥80%（总场次≥5）</div>
+                <div class="result-title">条件2：上/走/下任一比例>80%，总场次>4</div>
                 <div class="result-status" id="status2"></div>
                 <div class="rules-list" id="rules2"></div>
             </div>
