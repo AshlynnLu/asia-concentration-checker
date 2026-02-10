@@ -306,7 +306,7 @@ def build_summary_types(
 def main() -> None:
     data = build_summary_types()
     os.makedirs("static", exist_ok=True)
-    out_path = os.path.join("static", "summary_types.json")
+    out_path = os.path.join("static", "summary_types_v2.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"已导出汇总类型库到: {out_path}")

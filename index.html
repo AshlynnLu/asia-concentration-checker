@@ -519,7 +519,7 @@
         // 加载 2026 手工形态汇总类型库
         async function loadSummaryTypes() {
             try {
-                const response = await fetch('static/summary_types.json');
+                const response = await fetch('static/summary_types_v2.json');
                 if (!response.ok) {
                     throw new Error('无法加载汇总类型库（static/summary_types.json）');
                 }
