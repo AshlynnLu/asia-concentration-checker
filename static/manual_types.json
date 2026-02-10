@@ -1,0 +1,950 @@
+{
+  "meta": {
+    "source_rules_file": "docs/规则.xlsx",
+    "data_file": "docs/20252026欧洲FB.xlsx",
+    "total_types": 26,
+    "inconsistent_manual_vs_ai": 12
+  },
+  "types": [
+    {
+      "id": 1,
+      "row_index": 3,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "马平:>3.4，平差:<0；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "N_gt": 3.4,
+        "Q_lt": 0.0
+      },
+      "stats": {
+        "n_total": 6,
+        "shang": 1,
+        "xia": 5,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 2,
+      "row_index": 4,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "水差:(-0.3~-0.4)，主差:>-0.1；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "I_range": [
+          -0.4,
+          -0.3
+        ],
+        "P_gt": -0.1
+      },
+      "stats": {
+        "n_total": 12,
+        "shang": 2,
+        "xia": 10,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 9
+      },
+      "diff": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 1
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 3,
+      "row_index": 5,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "水差:(-0.3~-0.4)，主差:<-0.15；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "I_range": [
+          -0.4,
+          -0.3
+        ],
+        "P_lt": -0.15
+      },
+      "stats": {
+        "n_total": 6,
+        "shang": 1,
+        "xia": 5,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 4,
+      "row_index": 6,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "马平:3~3.1，主差:<0，平差:<0；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "N_range": [
+          3.0,
+          3.1
+        ],
+        "P_lt": 0.0,
+        "Q_lt": 0.0
+      },
+      "stats": {
+        "n_total": 11,
+        "shang": 1,
+        "xia": 10,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 9
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 1
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 5,
+      "row_index": 7,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "主差:<-0.2；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "P_lt": -0.2
+      },
+      "stats": {
+        "n_total": 4,
+        "shang": 0,
+        "xia": 4,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 4
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 6,
+      "row_index": 8,
+      "df_group": "0/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "主差:≥0；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "P_ge": 0.0
+      },
+      "stats": {
+        "n_total": 4,
+        "shang": 0,
+        "xia": 4,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 3
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 1
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 7,
+      "row_index": 9,
+      "df_group": "0/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "马主:2.1~2.2，马平:>3.2，客差:>0.05；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "K_range": [
+          2.1,
+          2.2
+        ],
+        "N_gt": 3.2,
+        "R_gt": 0.05
+      },
+      "stats": {
+        "n_total": 0,
+        "shang": 0,
+        "xia": 0,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 8
+      },
+      "diff": {
+        "shang": -1,
+        "zou": 0,
+        "xia": -8
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 8,
+      "row_index": 10,
+      "df_group": "0/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0",
+        "0.25"
+      ],
+      "feature_text": "马会:>1.1，马平:<2.9；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "G_gt": 1.1,
+        "N_lt": 2.9
+      },
+      "stats": {
+        "n_total": 11,
+        "shang": 3,
+        "xia": 8,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 3,
+        "zou": 0,
+        "xia": 3
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 9,
+      "row_index": 13,
+      "df_group": "0.25/0",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.25",
+        "0"
+      ],
+      "feature_text": "水差:<0.2；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "I_lt": 0.2
+      },
+      "stats": {
+        "n_total": 5,
+        "shang": 0,
+        "xia": 5,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 10,
+      "row_index": 14,
+      "df_group": "0.25/0",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.25",
+        "0"
+      ],
+      "feature_text": "马会:0.8~0.86，马平:>3.2；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "G_range": [
+          0.8,
+          0.86
+        ],
+        "N_gt": 3.2
+      },
+      "stats": {
+        "n_total": 7,
+        "shang": 0,
+        "xia": 6,
+        "zou": 1
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 1,
+        "xia": 6
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 11,
+      "row_index": 15,
+      "df_group": "0.25/0",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.25",
+        "0"
+      ],
+      "feature_text": "马主:>2.35；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "K_gt": 2.35
+      },
+      "stats": {
+        "n_total": 43,
+        "shang": 22,
+        "xia": 9,
+        "zou": 12
+      },
+      "manual_stats": {
+        "shang": 14,
+        "zou": 0,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 8,
+        "zou": 12,
+        "xia": 9
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 12,
+      "row_index": 16,
+      "df_group": "0.25/0",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.25",
+        "0"
+      ],
+      "feature_text": "马会:0.8~0.87，马平:<3.3；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "G_range": [
+          0.8,
+          0.87
+        ],
+        "N_lt": 3.3
+      },
+      "stats": {
+        "n_total": 10,
+        "shang": 10,
+        "xia": 0,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 10,
+        "zou": 0,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 13,
+      "row_index": 17,
+      "df_group": "0.25/0",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.25",
+        "0"
+      ],
+      "feature_text": "马会:>0.8；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "G_gt": 0.8
+      },
+      "stats": {
+        "n_total": 43,
+        "shang": 22,
+        "xia": 9,
+        "zou": 12
+      },
+      "manual_stats": {
+        "shang": 13,
+        "zou": 4,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 9,
+        "zou": 8,
+        "xia": 9
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 14,
+      "row_index": 20,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马平:<2.8，平差:(-0.05~-0.25)；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "N_lt": 2.8,
+        "Q_range": [
+          -0.25,
+          -0.05
+        ]
+      },
+      "stats": {
+        "n_total": 9,
+        "shang": 9,
+        "xia": 0,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 9,
+        "zou": 0,
+        "xia": 1
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": -1
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 15,
+      "row_index": 21,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马会:>0.85，水差:0.22~0.24；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "G_gt": 0.85,
+        "I_range": [
+          0.22,
+          0.24
+        ]
+      },
+      "stats": {
+        "n_total": 57,
+        "shang": 36,
+        "xia": 21,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 6,
+        "zou": 0,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 30,
+        "zou": 0,
+        "xia": 21
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 16,
+      "row_index": 22,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "主差:(-0.26~-0.28)；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "P_range": [
+          -0.28,
+          -0.26
+        ]
+      },
+      "stats": {
+        "n_total": 4,
+        "shang": 4,
+        "xia": 0,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 4,
+        "zou": 0,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 17,
+      "row_index": 23,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "水差:0.1~0.15，平差:<0；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "I_range": [
+          0.1,
+          0.15
+        ],
+        "Q_lt": 0.0
+      },
+      "stats": {
+        "n_total": 7,
+        "shang": 6,
+        "xia": 1,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 6,
+        "zou": 0,
+        "xia": 1
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 18,
+      "row_index": 24,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马会:0.8~0.83，水差:0.17~0.19；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "G_range": [
+          0.8,
+          0.83
+        ],
+        "I_range": [
+          0.17,
+          0.19
+        ]
+      },
+      "stats": {
+        "n_total": 5,
+        "shang": 0,
+        "xia": 5,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 19,
+      "row_index": 25,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "水差:0.17~0.2，马平:3.2~3.35；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "I_range": [
+          0.17,
+          0.2
+        ],
+        "N_range": [
+          3.2,
+          3.35
+        ]
+      },
+      "stats": {
+        "n_total": 7,
+        "shang": 1,
+        "xia": 6,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 6
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 20,
+      "row_index": 26,
+      "df_group": "0.5/0.25",
+      "side": "客",
+      "morph": [
+        "客",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马平:2.9~3，平差:>0；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "N_range": [
+          2.9,
+          3.0
+        ],
+        "Q_gt": 0.0
+      },
+      "stats": {
+        "n_total": 6,
+        "shang": 1,
+        "xia": 5,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 5
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 21,
+      "row_index": 27,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马平:<2.8；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "N_lt": 2.8
+      },
+      "stats": {
+        "n_total": 3,
+        "shang": 0,
+        "xia": 3,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 3
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 22,
+      "row_index": 28,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马会:0.71~0.79，水差:0.17~0.19；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "G_range": [
+          0.71,
+          0.79
+        ],
+        "I_range": [
+          0.17,
+          0.19
+        ]
+      },
+      "stats": {
+        "n_total": 8,
+        "shang": 0,
+        "xia": 8,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 8
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 23,
+      "row_index": 29,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马会:≤0.7，水差:0.3~0.35，马平:<3.3；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "G_le": 0.7,
+        "I_range": [
+          0.3,
+          0.35
+        ],
+        "N_lt": 3.3
+      },
+      "stats": {
+        "n_total": 10,
+        "shang": 2,
+        "xia": 8,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 7
+      },
+      "diff": {
+        "shang": 2,
+        "zou": 0,
+        "xia": 1
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 24,
+      "row_index": 30,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马平:3.25~3.4，平差:>0；预测:下盘",
+      "prediction": "下盘",
+      "conditions": {
+        "N_range": [
+          3.25,
+          3.4
+        ],
+        "Q_gt": 0.0
+      },
+      "stats": {
+        "n_total": 9,
+        "shang": 1,
+        "xia": 8,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 1,
+        "zou": 0,
+        "xia": 8
+      },
+      "diff": {
+        "shang": 0,
+        "zou": 0,
+        "xia": 0
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 25,
+      "row_index": 31,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "主差:≤-0.2，平差:≤-0.1；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "P_le": -0.2,
+        "Q_le": -0.1
+      },
+      "stats": {
+        "n_total": 21,
+        "shang": 12,
+        "xia": 9,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 5,
+        "zou": 0,
+        "xia": 0
+      },
+      "diff": {
+        "shang": 7,
+        "zou": 0,
+        "xia": 9
+      },
+      "parse_errors": []
+    },
+    {
+      "id": 26,
+      "row_index": 32,
+      "df_group": "0.5/0.25",
+      "side": "主",
+      "morph": [
+        "主",
+        "0.5",
+        "0.25"
+      ],
+      "feature_text": "马主:>1.9，平差:(-0.02~-0.09)；预测:上盘",
+      "prediction": "上盘",
+      "conditions": {
+        "K_gt": 1.9,
+        "Q_range": [
+          -0.09,
+          -0.02
+        ]
+      },
+      "stats": {
+        "n_total": 36,
+        "shang": 23,
+        "xia": 13,
+        "zou": 0
+      },
+      "manual_stats": {
+        "shang": 12,
+        "zou": 0,
+        "xia": 1
+      },
+      "diff": {
+        "shang": 11,
+        "zou": 0,
+        "xia": 12
+      },
+      "parse_errors": []
+    }
+  ]
+}

@@ -43,7 +43,8 @@ def export_rules():
             'description': {
                 'condition1': '(上+走)或(下+走)比例>85%，总场次>6，差值>3',
                 'condition2': '上/走/下任一比例>80%，总场次>4'
-            }
+            },
+            'source': 'AI 自动从 docs/20252026欧洲FB.xlsx 按 RED_CONDITIONS 和条件1/2 生成的高集中度规则'
         }
     }
     
