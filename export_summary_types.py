@@ -176,12 +176,34 @@ def _parse_atom(atom: str) -> Dict[str, Any]:
 
 
 def _parse_conditions_for_col(text: str) -> List[Dict[str, Any]]:
-    """将单元格中的条件文本解析为原子条件列表。"""
+    """将单元格中的条件文本解析为原子条件列表。
+
+    支持两种形式：
+    1）用 “且” 连接的多个不等式：<3.36且>3.19
+    2）用 “~” 表示区间：0.01~0.03  等价于 >=0.01 且 <=0.03
+    """
     s = _normalize_cond_text(text)
     if not s:
         return []
-    parts = s.split("&&")
     conds: List[Dict[str, Any]] = []
+
+    # 先处理纯区间形式：形如 "a~b"（不含 且）
+    if "&&" not in s and "~" in s:
+        parts = s.split("~")
+        if len(parts) == 2 and parts[0] and parts[1]:
+            try:
+                v1 = float(parts[0])
+                v2 = float(parts[1])
+                lo, hi = (v1, v2) if v1 <= v2 else (v2, v1)
+                conds.append({"op": ">=", "value": lo})
+                conds.append({"op": "<=", "value": hi})
+                return conds
+            except Exception:
+                # 回退到普通解析
+                pass
+
+    # 普通形式：用 且/&& 连接的多个原子条件
+    parts = s.split("&&")
     for p in parts:
         if not p:
             continue
