@@ -458,12 +458,6 @@
                 <div class="rules-list" id="rules2"></div>
             </div>
 
-            <div class="result-card" id="manualResult">
-                <div class="result-title">手工类型库匹配结果（来源：docs/规则.xlsx）</div>
-                <div class="result-status" id="manualStatus"></div>
-                <div class="rules-list" id="manualRules"></div>
-            </div>
-
             <div class="result-card" id="summaryResult">
                 <div class="result-title">2026 手工形态汇总类型库（已人工验证）</div>
                 <div class="result-status" id="summaryStatus"></div>
@@ -472,9 +466,8 @@
         </div>
     </div>
     
-    <script>
+        <script>
         let rulesData = null;
-        let manualTypesData = null;
         let summaryTypesData = null;
         
         // 加载规则数据
@@ -485,10 +478,9 @@
                     throw new Error('无法加载规则数据');
                 }
                 rulesData = await response.json();
-                document.getElementById('loadingStatus').textContent = `规则数据已加载（条件1: ${rulesData.meta.count_85}条，条件2: ${rulesData.meta.count_80}条），正在加载手工类型库和汇总类型库...`;
+                document.getElementById('loadingStatus').textContent = `规则数据已加载（条件1: ${rulesData.meta.count_85}条，条件2: ${rulesData.meta.count_80}条），正在加载 2026 汇总类型库...`;
 
-                // 成功加载规则后，再加载手工类型库和汇总类型库
-                loadManualTypes();
+                // 成功加载规则后，再加载 2026 汇总类型库
                 loadSummaryTypes();
 
                 document.getElementById('inputSection').style.display = 'block';
@@ -498,38 +490,20 @@
             }
         }
 
-        // 加载手工类型库（docs/规则.xlsx + AI 统计）
-        async function loadManualTypes() {
-            try {
-                const response = await fetch('static/manual_types.json');
-                if (!response.ok) {
-                    throw new Error('无法加载手工类型库（static/manual_types.json）');
-                }
-                manualTypesData = await response.json();
-                const meta = manualTypesData.meta || {};
-                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载手工类型库和汇总类型库\.\.\.$/, '');
-                document.getElementById('loadingStatus').textContent = `${baseText}，手工类型库已加载（共 ${meta.total_types || 0} 条）`;
-            } catch (error) {
-                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载手工类型库和汇总类型库\.\.\.$/, '');
-                document.getElementById('loadingStatus').textContent = baseText + '，手工类型库加载失败：' + error.message;
-                document.getElementById('loadingStatus').style.color = '#f44336';
-            }
-        }
-
         // 加载 2026 手工形态汇总类型库
         async function loadSummaryTypes() {
             try {
                 const response = await fetch('static/summary_types_v2.json');
                 if (!response.ok) {
-                    throw new Error('无法加载汇总类型库（static/summary_types.json）');
+                    throw new Error('无法加载汇总类型库（static/summary_types_v2.json）');
                 }
                 summaryTypesData = await response.json();
                 const meta = summaryTypesData.meta || {};
-                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载手工类型库和汇总类型库\.\.\.$/, '');
-                document.getElementById('loadingStatus').textContent = `${baseText}，汇总类型库已加载（共 ${meta.total_types || 0} 条）`;
+                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载 2026 汇总类型库\.\.\.$/, '');
+                document.getElementById('loadingStatus').textContent = `${baseText}，2026 汇总类型库已加载（共 ${meta.total_types || 0} 条）`;
             } catch (error) {
-                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载手工类型库和汇总类型库\.\.\.$/, '');
-                document.getElementById('loadingStatus').textContent = baseText + '，汇总类型库加载失败：' + error.message;
+                const baseText = document.getElementById('loadingStatus').textContent.replace(/，正在加载 2026 汇总类型库\.\.\.$/, '');
+                document.getElementById('loadingStatus').textContent = baseText + '，2026 汇总类型库加载失败：' + error.message;
                 document.getElementById('loadingStatus').style.color = '#f44336';
             }
         }
@@ -645,8 +619,6 @@
                     const matched_85 = checkCondition(data, rulesData.rules_85);
                     const matched_80 = checkCondition(data, rulesData.rules_80);
 
-                    // 检查手工类型库匹配
-                    const manualMatched = checkManualTypes(data);
                     // 检查 2026 汇总类型库匹配
                     const summaryMatched = checkSummaryTypes(data);
                     
@@ -678,11 +650,6 @@
                                 xia: r.xia,
                                 zou: r.zou
                             }))
-                        },
-                        manual: {
-                            matched: manualMatched.length > 0,
-                            count: manualMatched.length,
-                            types: manualMatched
                         },
                         summary: {
                             matched: summaryMatched.length > 0,
@@ -868,59 +835,6 @@
                 rules2.innerHTML = '';
             }
 
-            // 手工类型库匹配结果
-            const manual = result.manual;
-            const manualCard = document.getElementById('manualResult');
-            const manualStatus = document.getElementById('manualStatus');
-            const manualRules = document.getElementById('manualRules');
-
-            if (!manual || !manual.matched) {
-                manualCard.className = 'result-card not-matched';
-                manualStatus.className = 'result-status status-not-matched';
-                manualStatus.textContent = '✗ 当前数据未命中任何手工统计类型';
-                manualRules.innerHTML = '';
-            } else {
-                manualCard.className = 'result-card matched';
-                manualStatus.className = 'result-status status-matched';
-                manualStatus.textContent = `✓ 命中 ${manual.count} 条手工统计类型`;
-
-                // 简单按总场次从大到小排序
-                const sorted = manual.types.slice().sort((a, b) => (b.stats.n_total || 0) - (a.stats.n_total || 0));
-
-                let html = '';
-                for (let t of sorted.slice(0, 20)) {
-                    const pred = t.prediction || '';
-                    let predClass = '';
-                    let predText = '';
-                    if (pred.includes('上')) {
-                        predClass = 'prediction-badge shang';
-                        predText = '预测：上盘';
-                    } else if (pred.includes('下')) {
-                        predClass = 'prediction-badge xia';
-                        predText = '预测：下盘';
-                    } else if (pred.includes('走')) {
-                        predClass = 'prediction-badge zou';
-                        predText = '预测：走盘';
-                    }
-
-                    html += `
-                        <div class="rule-item">
-                            <strong>形态：</strong>${t.morph.join('/')}（分组：${t.df_group}）<br>
-                            <strong>特征：</strong>${t.feature_text || '（无）'}
-                            ${predText ? `<span class="${predClass}">${predText}</span>` : ''}<br>
-                            AI统计：总场次 ${t.stats.n_total} | 上${t.stats.shang} 下${t.stats.xia} 走${t.stats.zou}<br>
-                            人工统计：上${t.manual_stats.shang} 下${t.manual_stats.xia} 走${t.manual_stats.zou}
-                        </div>
-                    `;
-                }
-
-                if (sorted.length > 20) {
-                    html += `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">... 还有 ${sorted.length - 20} 条规则</div>`;
-                }
-
-                manualRules.innerHTML = html;
-            }
-
             // 2026 手工汇总类型库
             const summary = result.summary;
             const summaryCard = document.getElementById('summaryResult');
@@ -974,76 +888,6 @@
             document.getElementById('resultSection').classList.add('show');
         }
 
-        // 使用手工类型库判断当前行是否命中人工规则
-        function checkManualTypes(rowData) {
-            const matched = [];
-            if (!manualTypesData || !manualTypesData.types) {
-                return matched;
-            }
-
-            const B = String(rowData.B || '').trim();
-            const D = String(rowData.D || '').trim();
-            const F = String(rowData.F || '').trim();
-
-            if (B !== '主' && B !== '客') return matched;
-
-            const morph = [B, D, F];
-
-            function getNum(col) {
-                const val = rowData[col];
-                if (val === null || val === undefined || val === '') return null;
-                const num = parseFloat(val);
-                return isNaN(num) ? null : num;
-            }
-
-            const G = getNum('G');
-            const I = getNum('I');
-            const K = getNum('K');
-            const N = getNum('N');
-            const P = getNum('P');
-            const Q = getNum('Q');
-            const R = getNum('R');
-
-            const colValues = { G, I, K, N, P, Q, R };
-
-            for (const t of manualTypesData.types) {
-                const tm = t.morph || [];
-                if (tm.length !== 3) continue;
-                if (tm[0] !== morph[0] || tm[1] !== morph[1] || tm[2] !== morph[2]) {
-                    continue;
-                }
-
-                const conds = t.conditions || {};
-                let ok = true;
-                for (const [key, val] of Object.entries(conds)) {
-                    const colName = key.split('_')[0];
-                    const colVal = colValues[colName];
-                    if (colVal === null || colVal === undefined) {
-                        ok = false;
-                        break;
-                    }
-
-                    if (key.endsWith('_ge')) {
-                        if (colVal < val) { ok = false; break; }
-                    } else if (key.endsWith('_le')) {
-                        if (colVal > val) { ok = false; break; }
-                    } else if (key.endsWith('_gt')) {
-                        if (colVal <= val) { ok = false; break; }
-                    } else if (key.endsWith('_lt')) {
-                        if (colVal >= val) { ok = false; break; }
-                    } else if (key.endsWith('_range')) {
-                        if (!(val[0] <= colVal && colVal <= val[1])) { ok = false; break; }
-                    }
-                }
-
-                if (ok) {
-                    matched.push(t);
-                }
-            }
-
-            return matched;
-        }
-        
         // 使用 2026 汇总类型库判断当前行是否命中人工验证类型
         function checkSummaryTypes(rowData) {
             const matched = [];
