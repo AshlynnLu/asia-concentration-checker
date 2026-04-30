@@ -13,11 +13,47 @@ import json
 import zipfile
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
+
+
+def _find_sheet_xml_by_name(z: zipfile.ZipFile, sheet_name: str) -> str:
+    """从 workbook.xml 中按 sheet name 定位 worksheet xml 路径（如 xl/worksheets/sheet1.xml）。"""
+    ns = {
+        "main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+        "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
+        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    }
+
+    wb_root = ET.parse(z.open("xl/workbook.xml")).getroot()
+    rels_root = ET.parse(z.open("xl/_rels/workbook.xml.rels")).getroot()
+
+    rid_to_target: Dict[str, str] = {}
+    for rel in rels_root.findall("rel:Relationship", ns):
+        rid = rel.get("Id")
+        target = rel.get("Target") or ""
+        if rid:
+            rid_to_target[rid] = target
+
+    sheets_el = wb_root.find("main:sheets", ns)
+    if sheets_el is None:
+        raise ValueError("workbook.xml missing sheets")
+
+    for sh in sheets_el.findall("main:sheet", ns):
+        name = sh.get("name") or ""
+        if name != sheet_name:
+            continue
+        rid = sh.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id") or ""
+        target = rid_to_target.get(rid, "")
+        if not target:
+            raise ValueError(f"sheet '{sheet_name}' has no relationship target")
+        # target like "worksheets/sheet1.xml"
+        return "xl/" + target.lstrip("/")
+
+    raise ValueError(f"sheet not found by name: {sheet_name}")
 
 
 def _load_summary_sheet(path: str) -> List[Dict[str, Any]]:
-    """解析 2026欧洲FB手工形态汇总.xlsx 的 sheet2（汇总），返回规则行。"""
+    """解析 2026欧洲FB手工形态汇总.xlsx 的「汇总」表，返回规则行。"""
     if not os.path.exists(path):
         raise FileNotFoundError(path)
 
@@ -32,8 +68,8 @@ def _load_summary_sheet(path: str) -> List[Dict[str, Any]]:
             texts = si.findall(".//main:t", ns)
             strings.append("".join(t.text or "" for t in texts) if texts else "")
 
-        # 直接读取 sheet2.xml（已确认为“汇总”）
-        with z.open("xl/worksheets/sheet2.xml") as f:
+        sheet_xml = _find_sheet_xml_by_name(z, "汇总")
+        with z.open(sheet_xml) as f:
             sheet_root = ET.parse(f).getroot()
 
     rows_raw: Dict[int, Dict[str, str]] = defaultdict(dict)
@@ -84,12 +120,12 @@ def _load_summary_sheet(path: str) -> List[Dict[str, Any]]:
         if not current_group:
             continue
 
-        # 忽略全空行
-        if not any(row.get(col, "") for col in ("B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M")):
+        # 忽略全空行（条件 + 预测 + 统计 + 标注提示）
+        if not any(row.get(col, "") for col in ("B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P")):
             continue
 
         cols = {}
-        for col in ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"):
+        for col in ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"):
             cols[col] = row.get(col, "").strip()
 
         rules.append(
@@ -112,6 +148,7 @@ _HEADER_NAME_MAP = {
     "G": "主差",
     "H": "平差",
     "I": "客差",
+    "J": "澳平客差",
 }
 
 # 规则表列 -> 用户输入 A-R 列
@@ -124,6 +161,7 @@ _COL_TO_INPUT_COL = {
     "G": "P",  # 汇总「主差」      -> 数据 P 列（主差）
     "H": "Q",  # 汇总「平差」      -> 数据 Q 列（平差）
     "I": "R",  # 汇总「客差」      -> 数据 R 列（客差）
+    "J": "X",  # 汇总「澳平客差」  -> 数据 X 列（澳平客差）
 }
 
 
@@ -217,14 +255,14 @@ def _parse_conditions_for_col(text: str) -> List[Dict[str, Any]]:
 
 def _build_feature_text(cols: Dict[str, str]) -> str:
     parts: List[str] = []
-    for col in ("B", "C", "D", "E", "F", "G", "H", "I"):
+    for col in ("B", "C", "D", "E", "F", "G", "H", "I", "J"):
         v = cols.get(col, "")
         if not v:
             continue
         name = _HEADER_NAME_MAP.get(col, col)
         parts.append(f"{name}:{v}")
     feat = "，".join(parts)
-    pred = cols.get("J", "")
+    pred = cols.get("K", "")
     if pred:
         if feat:
             return f"{feat}；预测:{pred}"
@@ -273,9 +311,9 @@ def build_summary_types(
             except Exception:
                 return 0
 
-        shang = _to_int(cols.get("K", ""))
-        zou = _to_int(cols.get("L", ""))
-        xia = _to_int(cols.get("M", ""))
+        shang = _to_int(cols.get("L", ""))
+        zou = _to_int(cols.get("M", ""))
+        xia = _to_int(cols.get("N", ""))
 
         t = {
             "id": idx,
@@ -283,13 +321,15 @@ def build_summary_types(
             "group": group_str,
             "morph": morph,
             "conditions": conds,
-            "prediction": cols.get("J", ""),
+            "prediction": cols.get("K", ""),
             "feature_text": _build_feature_text(cols),
             "stats": {
                 "shang": shang,
                 "zou": zou,
                 "xia": xia,
             },
+            "mark": cols.get("O", ""),
+            "tip": cols.get("P", ""),
         }
         types.append(t)
 
