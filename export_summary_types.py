@@ -250,6 +250,21 @@ def _parse_conditions_for_col(text: str) -> List[Dict[str, Any]]:
         except Exception:
             # 解析失败就忽略该原子条件
             continue
+
+    # 修正：当一个条件是 "=" 且与 ">" 或 "<" 配合时，说明原文缺少运算符
+    # 例如 "0.04且＞-0.04" 应为 "<0.04且>-0.04"
+    if len(conds) >= 2:
+        eq_indices = [i for i, c in enumerate(conds) if c["op"] == "="]
+        other_ops = [c["op"] for i, c in enumerate(conds) if c["op"] != "="]
+        for idx in eq_indices:
+            eq_val = conds[idx]["value"]
+            has_gt = any(c["op"] in (">", ">=") and c["value"] < eq_val for c in conds if c is not conds[idx])
+            has_lt = any(c["op"] in ("<", "<=") and c["value"] > eq_val for c in conds if c is not conds[idx])
+            if has_gt:
+                conds[idx]["op"] = "<"
+            elif has_lt:
+                conds[idx]["op"] = ">"
+
     return conds
 
 
