@@ -107,15 +107,22 @@ def _load_summary_sheet(path: str) -> List[Dict[str, Any]]:
 
     rules: List[Dict[str, Any]] = []
     current_group = ""
+    last_side = ""
 
     for r_idx in sorted(rows_raw.keys()):
         row = rows_raw[r_idx]
         a_val = row.get("A", "")
         if is_group_header(a_val):
             current_group = a_val
+            last_side = ""
             continue
 
-        if a_val not in ("主", "客"):
+        if a_val in ("主", "客"):
+            last_side = a_val
+        elif not a_val and any(row.get(col, "") for col in ("B", "C", "D", "E", "F", "G", "H", "I", "J", "K")) and last_side:
+            a_val = last_side
+            row["A"] = a_val
+        else:
             continue
         if not current_group:
             continue
@@ -286,7 +293,7 @@ def _build_feature_text(cols: Dict[str, str]) -> str:
 
 
 def build_summary_types(
-    xlsx_path: str = "docs/2026欧洲FB手工形态汇总.xlsx",
+    xlsx_path: str = "docs/202601欧洲FB.xlsx",
 ) -> Dict[str, Any]:
     """构建基于“汇总”表的手工类型库（只使用人工统计）。"""
     raw_rules = _load_summary_sheet(xlsx_path)
@@ -318,7 +325,7 @@ def build_summary_types(
 
         # 人工统计的上/走/下
         def _to_int(x: str) -> int:
-            x = (x or "").strip()
+            x = (x or "").strip().lstrip(",")
             if not x:
                 return 0
             try:
