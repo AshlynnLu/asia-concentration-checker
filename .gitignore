@@ -33,3 +33,6 @@ test_*.html
 instance/
 .webassets-cache
 docs/
+
+# Claude Code
+.claude/
